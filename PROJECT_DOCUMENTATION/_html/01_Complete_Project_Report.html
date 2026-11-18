@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Indian Road Damage and Pothole Detection System Using Deep Learning — Project Report</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111827; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.45; }
+  h1 { font-size: 16pt; color: #0f2744; margin: 18px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 14pt; color: #0f2744; margin: 14px 0 6px; page-break-after: avoid; }
+  h3 { font-size: 13pt; color: #1e3a5f; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; text-align: justify; }
+  ul, ol { margin: 0 0 10px 22px; }
+  li { margin: 0 0 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; page-break-inside: avoid; }
+  th, td { border: 1px solid #334155; padding: 5px 6px; vertical-align: top; font-size: 10pt; text-align: left; }
+  th { background: #0f2744; color: white; }
+  img { width: 100%; height: auto; }
+  figure { margin: 8px 0 14px; page-break-inside: avoid; }
+  figcaption { text-align: center; font-weight: bold; font-size: 11pt; margin-top: 4px; }
+  .note { color: #1e40af; font-weight: bold; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px; white-space: pre-wrap; }
+  .pagebreak { page-break-before: always; }
+  .cover { page-break-after: always; min-height: 250mm; text-align: center; padding-top: 18mm; }
+  .cover h1 { font-size: 18pt; text-align: center; }
+  .muted { color: #334155; }
+  .kind { color: #1e40af; font-size: 16pt; font-weight: bold; }
+</style>
+</head>
+<body>
+
+    <section class="cover">
+      <p><strong>A PROJECT REPORT</strong></p>
+      <p>ON</p>
+      <h1>Indian Road Damage and Pothole Detection System Using Deep Learning</h1>
+      <p><strong>(RoadScan AI)</strong></p>
+      <p class="kind">Complete Project Report</p>
+      <p>Submitted in partial fulfilment of the requirements for the degree of</p>
+      <p><strong>Master of Computer Applications (MCA) — Final Year</strong></p>
+      <p>2026–2027</p>
+      <p style="margin-top:18px">Submitted by</p>
+      <p><strong>Tushar Ravidas Jarwal</strong><br/>Roll Number: 19</p>
+      <p style="margin-top:14px">Under the guidance of</p>
+      <p><strong>Professor Ajay Patil</strong></p>
+      <p style="margin-top:16px">College / Institute: ________________________________<br/>University: ________________________________</p>
+      <p>November 2026</p>
+    </section>
+    
+<h1>Certificate</h1>
+<p>This is to certify that Tushar Ravidas Jarwal (Roll Number 19) has completed the project titled “Indian Road Damage and Pothole Detection System Using Deep Learning” (RoadScan AI) under the guidance of Professor Ajay Patil in partial fulfilment of the requirements of Master of Computer Applications (MCA) — Final Year for the academic year 2026–2027.</p>
+<p>The work is a full-stack demonstration system. Detection results shown by the application come from the loaded YOLOv8 weight file. Severity and risk values are visual estimates produced by the software rules described in this document. They are not a certified civil-engineering measurement of pavement condition.</p>
+<p>Guide: ___________________________          Head of Department: ___________________________</p>
+<p>Date: ________________    Place: ________________</p>
+<h1>Declaration</h1>
+<p>I, Tushar Ravidas Jarwal, declare that this project report and the accompanying software are my original work carried out for the MCA final-year project. Sources of tools, libraries, and published research are acknowledged. I have not copied another student’s project.</p>
+<p>Signature of the student: ___________________________     Roll No. 19</p>
+<h1>Acknowledgement</h1>
+<p>I thank Professor Ajay Patil for guidance during analysis, design, and demonstration of this project. I also thank the department for the opportunity to present a practical system that combines a web dashboard with a deep-learning inference service. Open-source projects used in the implementation include React, Vite, Flask, OpenCV, Ultralytics YOLOv8, SQLite, Leaflet, and Recharts.</p>
+<h1>Abstract</h1>
+<p>Indian roads accumulate potholes, longitudinal cracks, transverse cracks, and alligator cracking. Manual inspection is slow and the record of a defect often stays on paper or in a photograph without a consistent location, severity tag, or repair trail. RoadScan AI is a web system that accepts a road image, a short video, a live camera frame, or a citizen complaint, runs a YOLOv8 detector, draws bounding boxes, estimates severity from the box area and class, computes a 0–100 risk score, and stores the record in SQLite. A React dashboard then shows history, charts, a map of stored coordinates, a damage heatmap, a repair workflow, and a printable inspection report.</p>
+<p>The frontend is React 19 with TypeScript, Vite, and Tailwind CSS. The backend is Flask with Ultralytics, OpenCV, and imageio-ffmpeg. The default weight file is backend/YOLOv8_Small_RDD.pt. If that file is absent, the server loads backend/best.pt. An environment variable MODEL_PATH overrides both. Login is a local browser session used to protect the dashboard during demonstration. It is not a server-side user directory. The project is intended for academic demonstration and municipal-style workflow practice, not as a production traffic-safety system.</p>
+<h1>Table of contents</h1>
+<ol><li>Chapter 1  Introduction</li><li>Chapter 2  Literature review and existing practice</li><li>Chapter 3  System analysis and requirements</li><li>Chapter 4  System design</li><li>Chapter 5  Implementation</li><li>Chapter 6  Testing summary</li><li>Chapter 7  Results and discussion</li><li>Chapter 8  Conclusion and future scope</li><li>References</li><li>Appendix A  REST API catalogue</li><li>Appendix B  Screen catalogue</li></ol>
+<div class="pagebreak"></div>
+<h1>Chapter 1 — Introduction</h1>
+<h2>1.1 Background</h2>
+<p>Road agencies and municipal wards need a repeatable way to notice surface damage. A photograph from a phone already contains most of the visual evidence, but a folder of photographs does not answer which frame contained a pothole, how confident the detector was, whether the defect is small or large in the frame, or whether a crew has been assigned. RoadScan AI keeps that evidence attached to a detection record.</p>
+<h2>1.2 Problem statement</h2>
+<p>Design and implement a student-deployable system that detects common road-damage classes from images and videos, explains each detection with class name, confidence, and a severity band, retains history, and supports a simple reported–assigned–in progress–repaired trail. The system must show a clear error when the model service is offline instead of inventing detections.</p>
+<h2>1.3 Objectives</h2>
+<ul><li>Detect road damage with a YOLOv8 model and return bounding boxes.</li><li>Provide separate workflows for still images, video files, and live camera frames.</li><li>Map dataset class codes such as D00, D10, D20, and D40 to readable names when those codes are present.</li><li>Estimate severity from box area and class, and compute a capped risk score.</li><li>Store detections and citizen complaints with optional latitude, longitude, and place name.</li><li>Show dashboard counts, analytics charts, a coordinate tracker, and a heatmap built only from stored coordinates.</li><li>Allow a repair status update with an audit note.</li><li>Generate a browser inspection report that can be printed.</li></ul>
+<h2>1.4 Scope</h2>
+<p>In scope: a single-workstation demonstration, one SQLite database, one loaded weight file, browser login for the user interface, and English labels. Out of scope: official IRC or MoRTH pavement ratings, multi-tenant production security, automatic work-order dispatch to a contractor, and measured depth of a pothole in millimetres. Depth cannot be recovered from a single ordinary photograph.</p>
+<h2>1.5 Users</h2>
+<table><thead><tr><th>Actor</th><th>What they do in this build</th></tr></thead><tbody><tr><td>Surveyor</td><td>Uploads images or video, reviews boxes, saves a location, updates repair status.</td></tr><tr><td>Citizen</td><td>Submits a complaint with an area name, a description of at least eight characters, and an optional photo.</td></tr><tr><td>Guide / examiner</td><td>Checks health, model name, history, and the difference between a live model result and sample dashboard data.</td></tr><tr><td>YOLO runtime</td><td>External component loaded inside the Flask process. It is not a separate network service.</td></tr></tbody></table>
+<h2>1.6 Definitions</h2>
+<table><thead><tr><th>Term</th><th>Meaning in this project</th></tr></thead><tbody><tr><td>Detection</td><td>One bounding box returned by YOLOv8 with class, confidence, and severity.</td></tr><tr><td>Severity</td><td>low, medium, or high. Computed from the percentage of the frame covered by the box, with class-specific rules.</td></tr><tr><td>Risk score</td><td>Integer 0–100 derived from severity, confidence, and the number of boxes. Category is low, medium, or high.</td></tr><tr><td>Model badge</td><td>The interface marks live Flask output as Model. Sample cards that are not inference are marked Demo.</td></tr><tr><td>RDD</td><td>Road Damage Detection class codes commonly used in smartphone road-damage datasets.</td></tr></tbody></table>
+<h1>Chapter 2 — Literature review and existing practice</h1>
+<h2>2.1 Manual inspection</h2>
+<p>A ward engineer walking or driving a stretch can miss defects, and two inspectors will not mark the same crack in the same way. Photographs help, but without a structured record the photograph is detached from the repair decision. The proposed system does not replace the engineer. It gives the engineer a first-pass visual list.</p>
+<h2>2.2 Object detection</h2>
+<p>Modern one-stage detectors such as the YOLO family predict boxes and classes in a single forward pass. YOLOv8, distributed through the Ultralytics library, is a practical choice for an MCA project because the same Python API trains and runs inference, and a .pt weight file can be dropped beside the Flask application. The server calls model.predict with imgsz 640, which matches the usual YOLO training resolution and helps smaller damage remain visible.</p>
+<h2>2.3 Road-damage datasets</h2>
+<p>Published smartphone datasets label damage with codes such as D00 (longitudinal crack), D10 (transverse crack), D20 (alligator crack), and D40 (pothole). Later sets also discuss markings such as blurred white lines and crosswalks. RoadScan AI does not retrain a model inside the web request. It loads a prepared weight file and translates known codes through CLASS_ALIASES. The class list actually available is whatever the loaded file exposes, and the health endpoint returns that list.</p>
+<h2>2.4 Limitations of typical student demos</h2>
+<ul><li>Desktop-only scripts that print boxes in a console and keep no history.</li><li>Interfaces that display sample detections when the model is down, which hides failure during a viva.</li><li>No distinction between a crack and a pothole when assigning urgency.</li><li>No place to record that a repair crew has started work.</li><li>Video processing that attempts every frame and stalls a CPU laptop.</li></ul>
+<h2>2.5 What this project adds</h2>
+<p>RoadScan AI separates the browser from the model, refuses to fabricate detections when Flask is offline, stores each successful image or video analysis, skips frames during video inference with a hard cap, encodes a browser-playable H.264 preview, and adds complaint, map, heatmap, risk, and repair screens on top of detection.</p>
+<h1>Chapter 3 — System analysis and requirements</h1>
+<h2>3.1 Existing system</h2>
+<p>The baseline considered here is a manual process: capture photos in a phone gallery, describe the site in a message or register, and prioritise by memory. There is no common confidence value and no single map of open defects.</p>
+<h2>3.2 Proposed system</h2>
+<p>A React single-page application talks to a Flask API. Flask loads YOLOv8 once at startup, reads uploads with OpenCV, writes annotated media, and inserts SQLite rows. The browser polls GET /api/health and surfaces Model Online only when the process responds and a weight file is loaded.</p>
+<h2>3.3 Feasibility</h2>
+<table><thead><tr><th>Study</th><th>Finding</th></tr></thead><tbody><tr><td>Technical</td><td>Python, Node.js, and a CPU are sufficient. A GPU is optional. Video length must stay short because inference is capped at 90 frames.</td></tr><tr><td>Economic</td><td>The stack is open source. Cost is a laptop and a weight file the student is allowed to use.</td></tr><tr><td>Operational</td><td>Two terminals start the system. A surveyor needs a short briefing, which the user manual provides.</td></tr><tr><td>Schedule</td><td>The modules match an MCA final-year calendar: analysis, a working detector, then maps and repair tracking.</td></tr><tr><td>Legal / ethical</td><td>Users should upload road images they are permitted to use. The demo login must not be described as secure authentication.</td></tr></tbody></table>
+<h2>3.4 Functional requirements</h2>
+<table><thead><tr><th>ID</th><th>Requirement</th></tr></thead><tbody><tr><td>FR-01</td><td>The system shall provide login and registration that require an email and a password of at least six characters, stored only in the browser.</td></tr><tr><td>FR-02</td><td>The system shall block dashboard routes until a session exists.</td></tr><tr><td>FR-03</td><td>The system shall expose GET /api/health with status, model_loaded, model file name, and class names.</td></tr><tr><td>FR-04</td><td>The system shall accept an image upload and return detections plus a base64 annotated JPEG.</td></tr><tr><td>FR-05</td><td>The system shall accept a video upload, sample frames, and return a playable annotated MP4 when encoding succeeds.</td></tr><tr><td>FR-06</td><td>The system shall accept a single camera frame and return detections without writing history.</td></tr><tr><td>FR-07</td><td>The system shall persist image and video runs in the history table.</td></tr><tr><td>FR-08</td><td>The system shall list, fetch, and delete history records.</td></tr><tr><td>FR-09</td><td>The system shall accept a complaint with a place name and a description of at least eight characters.</td></tr><tr><td>FR-10</td><td>The system shall store latitude and longitude only when both values are present and inside valid ranges. It shall not invent a coordinate.</td></tr><tr><td>FR-11</td><td>The system shall list tracker points and heatmap buckets only from stored coordinates.</td></tr><tr><td>FR-12</td><td>The system shall update repair status to reported, assigned, in_progress, or repaired, and append a note.</td></tr><tr><td>FR-13</td><td>The system shall compute severity and risk using the published rules in Chapter 5.</td></tr><tr><td>FR-14</td><td>The system shall allow the confidence threshold to be sent with the upload.</td></tr><tr><td>FR-15</td><td>The system shall open a printable inspection report from a stored record.</td></tr><tr><td>FR-16</td><td>The interface shall show an explicit error if the API cannot be reached, and shall not substitute fake boxes.</td></tr></tbody></table>
+<h2>3.5 Non-functional requirements</h2>
+<table><thead><tr><th>ID</th><th>Requirement</th></tr></thead><tbody><tr><td>NFR-01</td><td>The API and the Vite server shall run on a Windows 10 workstation for the viva.</td></tr><tr><td>NFR-02</td><td>Image inference shall use imgsz 640.</td></tr><tr><td>NFR-03</td><td>Video processing shall resize the long side toward 640 pixels, keep even dimensions, skip frames, and stop after 90 inferences.</td></tr><tr><td>NFR-04</td><td>Annotated video shall prefer libx264, yuv420p, and faststart so Chrome and Edge can play it.</td></tr><tr><td>NFR-05</td><td>CORS shall allow the local frontend to call the API during development.</td></tr><tr><td>NFR-06</td><td>A missing weight file shall produce HTTP 503 on detection routes rather than a silent empty success that looks like a clean road.</td></tr><tr><td>NFR-07</td><td>The interface shall remain usable on a laptop width and shall collapse the sidebar on a narrow screen.</td></tr><tr><td>NFR-08</td><td>Secrets such as production passwords are out of scope because the demo account is local.</td></tr></tbody></table>
+<h2>3.6 Constraints</h2>
+<ul><li>One Flask process holds the model. A second process started by a reloader would load the weights twice, so use_reloader is disabled.</li><li>SQLite allows one writer at a time. That matches a demo and is not a city-scale database.</li><li>Class names depend on the weight file. Documentation must not claim a measured mAP that this repository does not record.</li><li>best.pt is only a fallback. Project notes record that a custom best.pt produced about one percent confidence in local checks, so the preferred file is YOLOv8_Small_RDD.pt.</li></ul>
+<h1>Chapter 4 — System design</h1>
+<h2>4.1 Architecture</h2>
+<p>The system has three tiers. The browser renders routes and never runs YOLO. Flask owns inference, file storage, and SQL. SQLite plus the uploads and outputs folders are the data tier. The frontend reads VITE_API_BASE_URL and defaults to http://localhost:5000.</p>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/01_architecture.png'/><figcaption>Figure 1. Three-tier architecture of RoadScan AI.</figcaption></figure>
+<h2>4.2 Modules</h2>
+<table><thead><tr><th>Module</th><th>Responsibility</th></tr></thead><tbody><tr><td>AuthContext</td><td>Creates a UserProfile in localStorage under the key roadscan_auth_user.</td></tr><tr><td>ProtectedRoute</td><td>Sends an anonymous visitor to /login.</td></tr><tr><td>services/api.ts</td><td>Health, detection, history, complaints, repairs, tracker, heatmap, and dashboard stats.</td></tr><tr><td>ImageDetection</td><td>File picker, confidence, optional location, call detectImage, show boxes.</td></tr><tr><td>VideoDetection</td><td>Same pattern for video, including the server note about short clips.</td></tr><tr><td>LiveCamera</td><td>Captures frames and calls /api/detect/frame. Results are not inserted into history.</td></tr><tr><td>History and Analytics</td><td>Lists model records and charts counts by class, severity, and day.</td></tr><tr><td>Live Tracker and Heatmap</td><td>Leaflet maps. Heatmap buckets round coordinates to two decimal places.</td></tr><tr><td>Repairs</td><td>Status changes through the repair API.</td></tr><tr><td>Citizen Report</td><td>Complaint form. A photo is optional and is detected when the model is loaded.</td></tr><tr><td>report.ts</td><td>Opens a print view with GPS, risk, repair status, and the detection table.</td></tr><tr><td>app.py</td><td>All HTTP behaviour, severity, risk, video stride, and database migration of extra columns.</td></tr></tbody></table>
+<h2>4.3 Use cases</h2>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/02_usecase.png'/><figcaption>Figure 2. Use cases for the surveyor and the loaded model.</figcaption></figure>
+<h2>4.4 Sequence of image detection</h2>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/03_sequence_image.png'/><figcaption>Figure 3. Sequence from the browser upload to the annotated image.</figcaption></figure>
+<p>Video detection follows the same request shape. Flask opens the file with OpenCV, selects a stride from the frame count, runs at most 90 inferences, and encodes collected frames. Live detection stops before save().</p>
+<h2>4.5 Activity</h2>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/04_activity.png'/><figcaption>Figure 4. Activity from opening a detection page to a result or an error.</figcaption></figure>
+<h2>4.6 Logical structure</h2>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/05_class.png'/><figcaption>Figure 5. Main modules and the detection record they share.</figcaption></figure>
+<h2>4.7 Data design</h2>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/06_erd.png'/><figcaption>Figure 6. History and complaint entities.</figcaption></figure>
+<p>detections and status_history are JSON text. The server creates missing history columns with ALTER TABLE so an older detections.db still opens. Complaint rows live in their own table. The tracker reads both tables and keeps a row only when latitude and longitude are both present.</p>
+<h3>4.7.1 History columns</h3>
+<table><thead><tr><th>Column</th><th>Role</th></tr></thead><tbody><tr><td>id</td><td>UUID primary key.</td></tr><tr><td>type</td><td>image or video.</td></tr><tr><td>filename, created_at, total, severity</td><td>File label, timestamp, box count, worst severity.</td></tr><tr><td>detections</td><td>JSON list of class_name, raw_class, confidence, bbox, severity, and video timestamp.</td></tr><tr><td>result_url</td><td>Path such as /outputs/&lt;id&gt;.jpg or /outputs/&lt;id&gt;.mp4.</td></tr><tr><td>latitude, longitude, location_name</td><td>Optional. Invalid numbers are dropped.</td></tr><tr><td>repair_status</td><td>Defaults to reported.</td></tr><tr><td>risk_score, risk_category</td><td>Computed at insert time.</td></tr><tr><td>status_history</td><td>JSON list of status, time, and note.</td></tr><tr><td>description, owner_email, record_kind</td><td>Optional narrative, account email, and kind flag.</td></tr></tbody></table>
+<h2>4.8 Components, deployment, and data flow</h2>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/07_component.png'/><figcaption>Figure 7. User-interface, API, inference, and storage components.</figcaption></figure>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/08_deployment.png'/><figcaption>Figure 8. Local deployment used for demonstration.</figcaption></figure>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/09_dfd0.png'/><figcaption>Figure 9. Context diagram.</figcaption></figure>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/10_dfd1.png'/><figcaption>Figure 10. Level 1 data flow.</figcaption></figure>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/11_state_repair.png'/><figcaption>Figure 11. Allowed repair states. The API does not force them to be sequential, but the intended trail is left to right.</figcaption></figure>
+<h2>4.9 Interface design</h2>
+<p>The shell is a dark dashboard. The sidebar groups Overview, Detection, Analysis, Management, and System. Each detection page shows backend status. Sample content, where present on the dashboard for an empty project story, is labelled Demo. Numbers that come from Flask are labelled from the model path.</p>
+<h1>Chapter 5 — Implementation</h1>
+<h2>5.1 Technology stack</h2>
+<table><thead><tr><th>Layer</th><th>Choice</th></tr></thead><tbody><tr><td>Language (UI)</td><td>TypeScript on React 19.</td></tr><tr><td>Build</td><td>Vite. Tailwind CSS 4. React Router 7.</td></tr><tr><td>UI parts</td><td>Radix primitives, Lucide icons, Recharts, Leaflet.</td></tr><tr><td>Language (API)</td><td>Python 3.</td></tr><tr><td>API</td><td>Flask and Flask-CORS. Gunicorn is listed for a Unix host; the Windows demo uses python app.py.</td></tr><tr><td>Vision</td><td>ultralytics YOLO, opencv-python-headless, imageio-ffmpeg.</td></tr><tr><td>Database</td><td>SQLite file backend/detections.db.</td></tr><tr><td>Weights</td><td>YOLOv8_Small_RDD.pt preferred, best.pt fallback, MODEL_PATH override.</td></tr></tbody></table>
+<h2>5.2 Startup</h2>
+<p>On import, app.py creates uploads and outputs, chooses the weight path, and constructs YOLO if the file exists. Otherwise model remains None and detection routes return 503 with the message that weights must sit next to app.py. The development server binds 0.0.0.0 on PORT (default 5000) with the reloader off. FLASK_DEBUG can enable the Flask debugger without the reloader.</p>
+<h2>5.3 Class names</h2>
+<p>pretty_class maps D00 to Longitudinal Crack, D10 to Transverse Crack, D20 to Alligator Crack, D40 to Pothole, D43 to White Line Blur, D44 to Cross Walk Blur, and the same names written in snake case. Unknown names are shown unchanged. Each detection also keeps raw_class so a viva can show the code the model actually emitted.</p>
+<h2>5.4 Severity rule</h2>
+<p>Let the box be (x1, y1, x2, y2) on a frame of width w and height h. The area percentage is (x2-x1)*(y2-y1)*100/(w*h). The base band is high when the percentage is at least 8, medium when it is at least 2, and low otherwise. If the class name contains “crack” and the band would be high, it is reduced to medium, because a long crack can cover area without being a single collapse. If the class is a pothole or the raw code is D40, the band is high at 3 percent or more and medium at 1 percent or more. The record severity is the worst box: high over medium over low.</p>
+<p class='note'>State this rule in the viva. It is a visual estimate for sorting a list, not a pavement-management index.</p>
+<h2>5.5 Risk score</h2>
+<p>An empty detection list scores 0 and category low. Otherwise each box adds a weight times (0.4 + confidence), where confidence is capped at 1. Weights are 12 for low, 24 for medium, and 38 for high. Four or more boxes add 8. The total is rounded and clamped to 0–100. Category is high at 70 or above, medium at 40 or above, and low below 40.</p>
+<h2>5.6 Image route</h2>
+<p>POST /api/detect/image requires a file field. Confidence defaults to 0.15 when the form omits it. The React client sends 0.25 for image and video pages unless the user moves the control, and 0.15 for live frames. The file is saved under uploads using a UUID. OpenCV reads it. Failure returns 400. Success draws boxes with Ultralytics plot(), writes outputs/&lt;id&gt;.jpg, returns a data URL, and inserts history.</p>
+<h2>5.7 Video route</h2>
+<p>Stride is 5 when the frame count is above 600, 4 above 240, 3 above 120, and 2 otherwise. The loop stops after 90 inferred frames. Each inferred frame is resized to a maximum width of 640 with even width and height. Detections carry a timestamp equal to frame index divided by source frames per second. The preview image is the annotated frame that contained the most boxes. Encoding uses the ffmpeg binary from imageio-ffmpeg with libx264, yuv420p, preset veryfast, CRF 28, and faststart. If ffmpeg is missing, OpenCV mp4v is a fallback and may not play in the browser, though the file can still be downloaded. Encoding failure returns 500.</p>
+<h2>5.8 Location handling</h2>
+<p>read_geo parses latitude and longitude from the form. A missing value, a non-number, or a value outside [-90, 90] or [-180, 180] causes coordinates to be stored as null. A place name can still be stored. The heatmap groups remaining points by latitude and longitude rounded to two decimal places. A bucket is a high zone when it has two high-severity or high-risk records, or four records of any kind. Two records make a medium zone. One record is a low zone.</p>
+<h2>5.9 Complaints and repairs</h2>
+<p>A complaint requires a description of at least eight characters and a location name. An optional photo is detected when the model is loaded. Without a model, the original image is still stored. Repair updates accept a JSON body with status and an optional note. The kind path segment selects the complaints table or the history table. Any other status returns 400.</p>
+<h2>5.10 Frontend behaviour that matters in a viva</h2>
+<ul><li>checkHealth aborts after four seconds and tells the user to start Flask.</li><li>History rows returned by the API are tagged source model and status completed in the client.</li><li>absoluteMediaUrl prefixes /outputs paths with the API origin.</li><li>Dashboard stats from the server are file count, sum of detection totals, and the number of high-severity files. The client currently maps the file count into totalImages and sets totalVideos to 0. That mapping is a known limitation and is recorded in the audit.</li><li>Logout removes only the localStorage session.</li></ul>
+<h2>5.11 Repository layout</h2>
+<pre>RoadDamageDetection/
+  frontend/          React dashboard
+  backend/app.py     Flask API
+  backend/YOLOv8_Small_RDD.pt
+  backend/best.pt    fallback weights
+  models/            extra copy of the RDD weights
+  README.md
+  CONNECT_BACKEND.md</pre>
+<h1>Chapter 6 — Testing summary</h1>
+<p>A separate Software Testing Report lists the test design. This chapter records the strategy. Tests are specified from the source so an examiner can reproduce them. This report does not invent a pass percentage from a run that was not captured. During the viva, health, one image, one short video, one complaint, and one status change should be executed and the observed result written on the test log.</p>
+<ul><li>API negative tests: missing file, unreadable image, missing model, bad repair status, short complaint text, unknown history id.</li><li>API positive tests: health, image, video, frame, history list and delete, tracker, heatmap, complaint, repair.</li><li>Rule tests: severity boundaries at 1, 2, 3, and 8 percent, crack downgrade, empty risk, four-box bonus, score cap.</li><li>UI tests: password shorter than six characters, protected route, offline banner, model badge when health succeeds.</li><li>Non-functional checks: video stride selection and the 90-frame cap, even output dimensions, no invented GPS.</li></ul>
+<h1>Chapter 7 — Results and discussion</h1>
+<h2>7.1 What the demonstration shows</h2>
+<p>When the weight file loads, /api/health returns model_loaded true and the class list. An image response contains pixel width and height, a detection array, an annotated image, the worst severity, the risk score and category, the repair status reported, and any coordinates the user actually supplied. A video response adds frames processed, stride, duration, and a note that short clips of about 5 to 15 seconds suit a demonstration. A live frame returns saved false.</p>
+<h2>7.2 What is deliberately not claimed</h2>
+<p>The repository does not contain a frozen precision, recall, or mAP table for the weight file. Comparing best.pt with YOLOv8_Small_RDD.pt is supported by backend/compare_models.py, and that comparison must be quoted from an actual console log rather than from this narrative. A low-confidence weight should be replaced; the server already prefers YOLOv8_Small_RDD.pt for that reason.</p>
+<h2>7.3 Discussion</h2>
+<p>Bounding-box area is a proxy. A close camera makes a small pothole look large. A distant camera does the opposite. The severity rule is still useful because it is deterministic and can be explained. Frame skipping makes video interactive on a CPU and can miss a defect that appears for only one or two frames. The cap of 90 inferences bounds waiting time. Citizen complaints without a photo have no boxes and therefore a low risk until a photo is analysed.</p>
+<h2>7.4 Sample interpretation</h2>
+<p>Suppose one pothole box covers 4 percent of the frame with confidence 0.62. The pothole rule sets severity high because 4 is at least 3. The risk contribution is 38 * (0.4 + 0.62) = 38.76, which rounds to 39 and category low, because a single box does not reach 40. A second medium box can push the same site into the medium band. This example is arithmetic from the formula, not a measured field case.</p>
+<h1>Chapter 8 — Conclusion and future scope</h1>
+<h2>8.1 Conclusion</h2>
+<p>The project meets its academic objective. A surveyor can upload media, see YOLO boxes with confidence and a stated severity rule, keep a history, place real coordinates on a map, accept a citizen complaint, and move a record along a repair trail. The system fails visibly when the model is absent. That honesty is part of the design.</p>
+<h2>8.2 Limitations</h2>
+<ul><li>Browser login is not authentication against the API. Any client that can reach port 5000 can call the routes.</li><li>CORS is open for local development.</li><li>Output files are served with a video/mp4 content type even when the file is a JPEG.</li><li>Dashboard stat mapping does not split image and video counts.</li><li>There is no measured depth, area in square metres, or official defect code for a work order.</li><li>SQLite and a single process will not serve a city concurrently.</li></ul>
+<h2>8.3 Future scope</h2>
+<ul><li>Server accounts with hashed passwords and per-user history.</li><li>A measured evaluation sheet: precision, recall, and mAP on a held-out Indian road set, stored in the repository.</li><li>Camera calibration or a known mounting height so box size can be converted toward an approximate ground area.</li><li>PostgreSQL, object storage, and a queue for video jobs.</li><li>A mobile capture client that always sends GPS.</li><li>Retraining when new ward photographs are labelled.</li><li>Role separation so a citizen cannot change a repair status.</li></ul>
+<h1>References</h1>
+<ol><li>G. Jocher, A. Chaurasia, and J. Qiu, Ultralytics YOLOv8, https://github.com/ultralytics/ultralytics.</li><li>J. Redmon, S. Divvala, R. Girshick, and A. Farhadi, “You Only Look Once: Unified, Real-Time Object Detection,” CVPR, 2016.</li><li>H. Maeda, Y. Sekimoto, T. Seto, T. Kashiyama, and H. Omata, “Road Damage Detection and Classification Using Deep Neural Networks with Smartphone Images,” Computer-Aided Civil and Infrastructure Engineering, 2018.</li><li>Pallets Projects, Flask documentation, https://flask.palletsprojects.com.</li><li>OpenCV team, OpenCV documentation, https://docs.opencv.org.</li><li>Meta Platforms, React documentation, https://react.dev.</li><li>Leaflet contributors, Leaflet documentation, https://leafletjs.com.</li><li>SQLite Consortium, SQLite documentation, https://www.sqlite.org/docs.html.</li></ol>
+<h1>Appendix A — REST API catalogue</h1>
+<table><thead><tr><th>Method and path</th><th>Purpose</th><th>Notable result</th></tr></thead><tbody><tr><td>GET /api/health</td><td>Liveness and weights</td><td>model_loaded, classes</td></tr><tr><td>POST /api/detect/image</td><td>Still image</td><td>detections, annotated_image, risk</td></tr><tr><td>POST /api/detect/video</td><td>Video file</td><td>annotated_video, stride, frames_processed</td></tr><tr><td>POST /api/detect/frame</td><td>One camera frame</td><td>saved is false</td></tr><tr><td>GET /api/history</td><td>All detections, newest first</td><td>JSON array</td></tr><tr><td>GET /api/history/&lt;id&gt;</td><td>One detection</td><td>404 if missing</td></tr><tr><td>DELETE /api/history/&lt;id&gt;</td><td>Delete a detection row</td><td>ok true</td></tr><tr><td>GET /api/tracker</td><td>Rows that have coordinates</td><td>history plus complaints</td></tr><tr><td>GET /api/heatmap</td><td>Coordinate buckets</td><td>zone low, medium, or high</td></tr><tr><td>PATCH /api/repairs/&lt;kind&gt;/&lt;id&gt;</td><td>Repair status</td><td>400 if status is not allowed</td></tr><tr><td>GET /api/complaints</td><td>Complaints, optional email filter</td><td>JSON array</td></tr><tr><td>POST /api/complaints</td><td>New complaint</td><td>400 if text is too short or place is empty</td></tr><tr><td>GET /api/dashboard/stats</td><td>Counts</td><td>files, damages, high</td></tr><tr><td>GET /outputs/&lt;name&gt;</td><td>Annotated file</td><td>Sent from the outputs folder</td></tr></tbody></table>
+<h1>Appendix B — Screen catalogue</h1>
+<table><thead><tr><th>Route</th><th>Screen</th></tr></thead><tbody><tr><td>/login, /register</td><td>Session entry.</td></tr><tr><td>/dashboard</td><td>Counts and entry points.</td></tr><tr><td>/detect/image</td><td>Image analysis.</td></tr><tr><td>/detect/video</td><td>Video analysis.</td></tr><tr><td>/live-camera</td><td>Camera frames without history writes.</td></tr><tr><td>/history</td><td>Stored model runs.</td></tr><tr><td>/analytics</td><td>Charts and report opening.</td></tr><tr><td>/live-tracker</td><td>Map of stored coordinates.</td></tr><tr><td>/heatmap</td><td>Zone buckets.</td></tr><tr><td>/risk-score</td><td>Risk explanation and scores.</td></tr><tr><td>/repairs</td><td>Status updates.</td></tr><tr><td>/citizen-report</td><td>Complaint form.</td></tr><tr><td>/about</td><td>Project abstract shown inside the app, including the student and guide names.</td></tr><tr><td>/settings</td><td>Local profile and API notes.</td></tr></tbody></table>
+</body>
+</html>

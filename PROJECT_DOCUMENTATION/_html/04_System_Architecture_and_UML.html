@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>System Architecture and UML Diagrams — RoadScan AI</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111827; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.45; }
+  h1 { font-size: 16pt; color: #0f2744; margin: 18px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 14pt; color: #0f2744; margin: 14px 0 6px; page-break-after: avoid; }
+  h3 { font-size: 13pt; color: #1e3a5f; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; text-align: justify; }
+  ul, ol { margin: 0 0 10px 22px; }
+  li { margin: 0 0 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; page-break-inside: avoid; }
+  th, td { border: 1px solid #334155; padding: 5px 6px; vertical-align: top; font-size: 10pt; text-align: left; }
+  th { background: #0f2744; color: white; }
+  img { width: 100%; height: auto; }
+  figure { margin: 8px 0 14px; page-break-inside: avoid; }
+  figcaption { text-align: center; font-weight: bold; font-size: 11pt; margin-top: 4px; }
+  .note { color: #1e40af; font-weight: bold; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px; white-space: pre-wrap; }
+  .pagebreak { page-break-before: always; }
+  .cover { page-break-after: always; min-height: 250mm; text-align: center; padding-top: 18mm; }
+  .cover h1 { font-size: 18pt; text-align: center; }
+  .muted { color: #334155; }
+  .kind { color: #1e40af; font-size: 16pt; font-weight: bold; }
+</style>
+</head>
+<body>
+
+    <section class="cover">
+      <p><strong>A PROJECT REPORT</strong></p>
+      <p>ON</p>
+      <h1>Indian Road Damage and Pothole Detection System Using Deep Learning</h1>
+      <p><strong>(RoadScan AI)</strong></p>
+      <p class="kind">System Architecture and UML Diagrams</p>
+      <p>Submitted in partial fulfilment of the requirements for the degree of</p>
+      <p><strong>Master of Computer Applications (MCA) — Final Year</strong></p>
+      <p>2026–2027</p>
+      <p style="margin-top:18px">Submitted by</p>
+      <p><strong>Tushar Ravidas Jarwal</strong><br/>Roll Number: 19</p>
+      <p style="margin-top:14px">Under the guidance of</p>
+      <p><strong>Professor Ajay Patil</strong></p>
+      <p style="margin-top:16px">College / Institute: ________________________________<br/>University: ________________________________</p>
+      <p>November 2026</p>
+    </section>
+    
+<h1>1. Purpose</h1>
+<p>This volume collects the architecture and UML-style diagrams for RoadScan AI. The diagrams match the running design: a React client, a Flask and YOLOv8 server, and a SQLite file. They are implementation diagrams for the viva, drawn from the modules that exist in the repository.</p>
+<h1>2. Architectural style</h1>
+<p>The style is a three-tier client-server. The presentation tier is a single-page application. The application tier is stateless apart from the loaded model and the SQLite file on disk. There is no separate message queue. Video work happens inside the request, which is acceptable only because stride and a frame cap bound the work.</p>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/01_architecture.png'/><figcaption>Figure 1. Three-tier architecture.</figcaption></figure>
+<h2>2.1 Why the model stays behind Flask</h2>
+<p>Loading YOLOv8 in the browser would publish the weight file and would be heavy on a student laptop’s GPU drivers. Keeping inference in Python matches the Ultralytics API and lets OpenCV and FFmpeg share one pipeline.</p>
+<h1>3. Use case diagram</h1>
+<p>The human actor is a surveyor who may also file a citizen-style complaint. The model is shown as a supporting actor because detection use cases cannot complete without it. Login is local. Health is a separate use case so the examiner can prove the model is loaded before trusting a screenshot.</p>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/02_usecase.png'/><figcaption>Figure 2. Use case diagram.</figcaption></figure>
+<h2>3.1 Use case narrative — detect image</h2>
+<table><thead><tr><th>Field</th><th>Description</th></tr></thead><tbody><tr><td>Name</td><td>Detect image</td></tr><tr><td>Actor</td><td>Surveyor, with YOLOv8</td></tr><tr><td>Precondition</td><td>Session exists in the browser. Flask is running. A weight file loaded.</td></tr><tr><td>Main flow</td><td>User selects a JPEG or PNG, optional confidence and GPS, and starts analysis. The client posts multipart form data. Flask runs prediction, stores the row, and returns JSON.</td></tr><tr><td>Alternate flow</td><td>Unreadable file returns 400. Missing model returns 503. Network failure is shown by the client and nothing is stored.</td></tr><tr><td>Postcondition</td><td>A history row exists for a successful call. outputs contains the annotated JPEG.</td></tr></tbody></table>
+<h1>4. Sequence diagram</h1>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/03_sequence_image.png'/><figcaption>Figure 3. Image-detection sequence.</figcaption></figure>
+<p>The video sequence inserts a loop between steps 3 and 4: read a frame, skip according to stride, predict, keep the annotated frame, stop at 90 inferences or end of file, then encode. The live-camera sequence omits the database insert.</p>
+<h1>5. Activity diagram</h1>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/04_activity.png'/><figcaption>Figure 4. Activity for analysis.</figcaption></figure>
+<h1>6. Class diagram</h1>
+<p>The browser does not use a classical inheritance hierarchy for domain objects. The diagram shows the modules and the two records they pass. Detection is the box. HistoryRecord is the stored job. The Flask module owns the functions severity, compute_risk, save, and the route handlers.</p>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/05_class.png'/><figcaption>Figure 5. Module and record diagram.</figcaption></figure>
+<h1>7. State diagram</h1>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/11_state_repair.png'/><figcaption>Figure 11. Repair-status states.</figcaption></figure>
+<p>The implementation accepts any of the four statuses from any of the others. A stricter state machine that forbids moving from repaired back to reported would be a future rule. The diagram shows the intended operational order.</p>
+<h1>8. Component diagram</h1>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/07_component.png'/><figcaption>Figure 7. Components.</figcaption></figure>
+<h1>9. Deployment diagram</h1>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/08_deployment.png'/><figcaption>Figure 8. Deployment on one Windows workstation. Port 5173 serves the interface. Port 5000 serves the API and the annotated files.</figcaption></figure>
+<h1>10. Data-flow diagrams</h1>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/09_dfd0.png'/><figcaption>Figure 9. Context diagram.</figcaption></figure>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/10_dfd1.png'/><figcaption>Figure 10. Level 1 diagram. Process 3 is the only step that reads the weight file.</figcaption></figure>
+<h1>11. Entity-relationship diagram</h1>
+<figure><img src='C:/Users/Admin/Downloads/RoadDamageDetection/PROJECT_DOCUMENTATION/diagrams/06_erd.png'/><figcaption>Figure 6. Logical data model.</figcaption></figure>
+<p>There is no foreign key between complaints and history. A complaint photo that is analysed does not also insert a history row in the current code. Maps union the two tables at read time. That is why source_table is added in the tracker response and is not a stored column.</p>
+<h1>12. Route map</h1>
+<table><thead><tr><th>Path</th><th>Guard</th><th>Primary component</th></tr></thead><tbody><tr><td>/login</td><td>Public</td><td>LoginPage</td></tr><tr><td>/register</td><td>Public</td><td>RegisterPage</td></tr><tr><td>/dashboard</td><td>Protected</td><td>DashboardPage</td></tr><tr><td>/detect/image</td><td>Protected</td><td>ImageDetectionPage</td></tr><tr><td>/detect/video</td><td>Protected</td><td>VideoDetectionPage</td></tr><tr><td>/live-camera</td><td>Protected</td><td>LiveCameraPage</td></tr><tr><td>/history</td><td>Protected</td><td>HistoryPage</td></tr><tr><td>/analytics</td><td>Protected</td><td>AnalyticsPage</td></tr><tr><td>/live-tracker</td><td>Protected</td><td>LiveTrackerPage</td></tr><tr><td>/heatmap</td><td>Protected</td><td>HeatmapPage</td></tr><tr><td>/risk-score</td><td>Protected</td><td>RiskScorePage</td></tr><tr><td>/repairs</td><td>Protected</td><td>RepairsPage</td></tr><tr><td>/citizen-report</td><td>Protected</td><td>CitizenReportPage</td></tr><tr><td>/about</td><td>Protected</td><td>AboutPage</td></tr><tr><td>/settings</td><td>Protected</td><td>SettingsPage</td></tr></tbody></table>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Installation Guide — RoadScan AI</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111827; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.45; }
+  h1 { font-size: 16pt; color: #0f2744; margin: 18px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 14pt; color: #0f2744; margin: 14px 0 6px; page-break-after: avoid; }
+  h3 { font-size: 13pt; color: #1e3a5f; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; text-align: justify; }
+  ul, ol { margin: 0 0 10px 22px; }
+  li { margin: 0 0 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; page-break-inside: avoid; }
+  th, td { border: 1px solid #334155; padding: 5px 6px; vertical-align: top; font-size: 10pt; text-align: left; }
+  th { background: #0f2744; color: white; }
+  img { width: 100%; height: auto; }
+  figure { margin: 8px 0 14px; page-break-inside: avoid; }
+  figcaption { text-align: center; font-weight: bold; font-size: 11pt; margin-top: 4px; }
+  .note { color: #1e40af; font-weight: bold; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px; white-space: pre-wrap; }
+  .pagebreak { page-break-before: always; }
+  .cover { page-break-after: always; min-height: 250mm; text-align: center; padding-top: 18mm; }
+  .cover h1 { font-size: 18pt; text-align: center; }
+  .muted { color: #334155; }
+  .kind { color: #1e40af; font-size: 16pt; font-weight: bold; }
+</style>
+</head>
+<body>
+
+    <section class="cover">
+      <p><strong>A PROJECT REPORT</strong></p>
+      <p>ON</p>
+      <h1>Indian Road Damage and Pothole Detection System Using Deep Learning</h1>
+      <p><strong>(RoadScan AI)</strong></p>
+      <p class="kind">Installation Guide</p>
+      <p>Submitted in partial fulfilment of the requirements for the degree of</p>
+      <p><strong>Master of Computer Applications (MCA) — Final Year</strong></p>
+      <p>2026–2027</p>
+      <p style="margin-top:18px">Submitted by</p>
+      <p><strong>Tushar Ravidas Jarwal</strong><br/>Roll Number: 19</p>
+      <p style="margin-top:14px">Under the guidance of</p>
+      <p><strong>Professor Ajay Patil</strong></p>
+      <p style="margin-top:16px">College / Institute: ________________________________<br/>University: ________________________________</p>
+      <p>November 2026</p>
+    </section>
+    
+<h1>1. Purpose</h1>
+<p>This guide installs RoadScan AI on Windows 10 for a local demonstration. The interface uses port 5173. The API uses port 5000. You need two terminals.</p>
+<h1>2. Hardware and software you need</h1>
+<table><thead><tr><th>Item</th><th>Requirement</th></tr></thead><tbody><tr><td>OS</td><td>Windows 10 (tested target for this project).</td></tr><tr><td>CPU</td><td>A recent laptop CPU is enough. A GPU is optional.</td></tr><tr><td>RAM</td><td>8 GB minimum. 16 GB is more comfortable once PyTorch loads.</td></tr><tr><td>Disk</td><td>Several gigabytes for the Python environment and PyTorch, plus the .pt weight file.</td></tr><tr><td>Python</td><td>3.12 is the version observed in this workspace. Python 3.10 or newer is the practical range for current Ultralytics builds.</td></tr><tr><td>Node.js</td><td>Current LTS with npm, so that Vite can run.</td></tr><tr><td>Browser</td><td>Chrome or Edge.</td></tr><tr><td>Media</td><td>A road image and a short MP4 you have rights to use.</td></tr></tbody></table>
+<h1>3. Get the project folder</h1>
+<p>Copy the RoadDamageDetection folder onto the machine. The important paths are frontend, backend/app.py, backend/requirements.txt, and backend/YOLOv8_Small_RDD.pt. best.pt may sit beside it as a fallback.</p>
+<h1>4. Install and start the API</h1>
+<ol><li>Open PowerShell.</li><li>Change directory to the backend folder.</li><li>Create a virtual environment: python -m venv venv.</li><li>Activate it: .\venv\Scripts\activate.</li><li>Install dependencies: pip install -r requirements.txt. This installs Flask, Flask-CORS, Ultralytics, OpenCV, imageio-ffmpeg, and Gunicorn. Ultralytics pulls in PyTorch.</li><li>Confirm the weight file is in this same folder.</li><li>Start the server: python app.py.</li><li>Leave this window open. The console should print Model loaded: True and the class map.</li></ol>
+<pre>cd C:\Users\Admin\Downloads\RoadDamageDetection\backend
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+python app.py</pre>
+<h2>4.1 Check the API</h2>
+<p>Open http://localhost:5000/api/health in the browser. A healthy body looks like this shape:</p>
+<pre>{
+  &quot;status&quot;: &quot;ok&quot;,
+  &quot;model_loaded&quot;: true,
+  &quot;model_path&quot;: &quot;YOLOv8_Small_RDD.pt&quot;,
+  &quot;classes&quot;: [&quot;...&quot;]
+}</pre>
+<p>If model_loaded is false, the process did not find a weight file. Copy YOLOv8_Small_RDD.pt next to app.py, or set MODEL_PATH to the full path of a .pt file, and start python app.py again.</p>
+<h1>5. Install and start the website</h1>
+<ol><li>Open a second PowerShell window.</li><li>Change directory to the frontend folder.</li><li>Install packages: npm install.</li><li>Start the dev server: npm run dev.</li><li>Open the URL Vite prints. It is normally http://localhost:5173.</li></ol>
+<pre>cd C:\Users\Admin\Downloads\RoadDamageDetection\frontend
+npm install
+npm run dev</pre>
+<h2>5.1 Point the website at a different API</h2>
+<p>Create frontend/.env when the API is not on port 5000:</p>
+<pre>VITE_API_BASE_URL=http://localhost:5000</pre>
+<p>Restart npm run dev after changing the file. Do not put a slash at the end.</p>
+<h1>6. First login</h1>
+<p>Register a name, email, and a password of at least six characters, or log in with student@roadscan.ai and demo123. Then follow the User Manual. Analyse one sample image under frontend/public/samples before the viva so the weights are loaded into memory.</p>
+<h1>7. Optional production-style UI build</h1>
+<p>npm run build compiles the TypeScript and writes a static site. npm run preview serves that build locally. The Flask development server is still required for detection. Gunicorn is listed for a Unix deployment and is not the Windows start command.</p>
+<h1>8. Environment variables</h1>
+<table><thead><tr><th>Variable</th><th>Where</th><th>Effect</th></tr></thead><tbody><tr><td>MODEL_PATH</td><td>Flask process</td><td>Absolute or relative path of the .pt file to load.</td></tr><tr><td>PORT</td><td>Flask process</td><td>API port. Default 5000.</td></tr><tr><td>FLASK_DEBUG</td><td>Flask process</td><td>true, 1, or t enables the Flask debugger. The reloader stays off.</td></tr><tr><td>VITE_API_BASE_URL</td><td>Frontend build / dev</td><td>Origin of the API. Default http://localhost:5000.</td></tr></tbody></table>
+<h1>9. Folder roles</h1>
+<table><thead><tr><th>Path</th><th>Role</th></tr></thead><tbody><tr><td>backend/uploads</td><td>Original uploads. Created automatically.</td></tr><tr><td>backend/outputs</td><td>Annotated JPEG and MP4 files. Served under /outputs/.</td></tr><tr><td>backend/detections.db</td><td>SQLite database. Created on first use.</td></tr><tr><td>frontend/public/samples</td><td>Three sample road photographs.</td></tr></tbody></table>
+<h1>10. Troubleshooting</h1>
+<table><thead><tr><th>Symptom</th><th>Action</th></tr></thead><tbody><tr><td>python is not recognised</td><td>Install Python and enable the “Add python.exe to PATH” option, then open a new terminal.</td></tr><tr><td>pip install fails on a torch wheel</td><td>Upgrade pip, then retry inside the activated virtual environment. A 64-bit Python is required.</td></tr><tr><td>Port 5000 already in use</td><td>Stop the other program or set PORT to a free port and match VITE_API_BASE_URL.</td></tr><tr><td>Port 5173 already in use</td><td>Vite will offer the next port. Use the URL it prints.</td></tr><tr><td>CORS or failed fetch</td><td>The page must call the same origin you put in VITE_API_BASE_URL. Restart both processes after a change.</td></tr><tr><td>Model loaded False</td><td>The .pt file is missing or MODEL_PATH is wrong.</td></tr><tr><td>Very low confidence on every box</td><td>You may be on the fallback best.pt. Prefer YOLOv8_Small_RDD.pt. The source comment records that best.pt scored about one percent confidence in a local test.</td></tr><tr><td>Video returns Failed to encode</td><td>Reinstall imageio-ffmpeg inside the virtual environment.</td></tr><tr><td>npm install peer warnings</td><td>Warnings alone are not a failure. A non-zero exit code is.</td></tr></tbody></table>
+<h1>11. Stop and start next time</h1>
+<ol><li>Activate the backend virtual environment and run python app.py.</li><li>In the frontend folder run npm run dev. You do not need npm install again unless package.json changed.</li><li>Open the site and check the model status.</li></ol>
+<h1>12. What not to delete</h1>
+<ul><li>Do not delete the .pt files if you want detection.</li><li>Deleting detections.db clears history and complaints. The file is recreated empty.</li><li>Deleting the virtual environment only means you must run pip install again. It does not delete your source.</li></ul>
+</body>
+</html>

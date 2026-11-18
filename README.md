@@ -1,121 +1,69 @@
-# Road Damage Detection Applications
+# Indian Road Damage & Pothole Detection System
 
-This project is road damage detection applications that designed to enhance road safety and infrastructure maintenance by swiftly identifying and categorizing various forms of road damage, such as potholes and cracks.
+Full-stack MCA project: **React + TypeScript frontend** and **Flask + YOLOv8 backend**.
 
-## Performing Detection Using Image
-![Detection using image](resource/RDD_Image_Example.gif)
+## Project structure
 
-## Performing Detection Using Video
-![Detection using video](resource/RDD_Video_Example.gif)
+```
+RoadDamageDetection/
+├── frontend/          # React dashboard (Vite + Tailwind)
+├── backend/           # Flask API + best.pt weights
+└── README.md
+```
 
-The project is powered by YOLOv8 deep learning model that trained on Crowdsensing-based Road Damage Detection Challenge 2022 dataset.
+## Quick start (Windows 10)
 
-There is four types of damage that this model can detects such as:
-- Longitudinal Crack
-- Transverse Crack
-- Alligator Crack
-- Potholes
+### 1) Frontend
 
-## Running on Local Server
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
-This is the step that you take to install and run the web-application on the local server.
+Open http://localhost:5173  
+Login with any email + password (min 6 chars), e.g. `student@roadscan.ai` / `demo123`.
 
-``` bash
-# Install CUDA if available
-# https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
+### 2) Backend (real YOLOv8 detection)
 
-# Create the python environment
-conda create -n rdd python=3.8
-conda activate rdd
-
-# Install pytorch-CUDA
-# https://pytorch.org/get-started/locally/
-conda install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-cuda=11.8 -c pytorch -c nvidia
-
-# Install ultralytics deep learning framework
-# https://docs.ultralytics.com/quickstart/
-pip install ultralytics
-
-# Clone the repository
-git clone https://github.com/oracl4/RoadDamageDetection.git
-cd RoadDamageDetection
-
-# Install requirements
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\activate
 pip install -r requirements.txt
-
-# Start the streamlit webserver
-streamlit run Home.py
+python app.py
 ```
 
-## Web Demo
+API: http://localhost:5000/api/health
 
-### [🎈Webserver Online Demo](https://roaddamagedetection.streamlit.app/)
-    
-    You can access the webserver demo on the streamlit cloud. But due to hardware limitations, some functions may not be working as intended. Such as, the realtime detection cannot capture the webcam input and slow inference on video detection.
+Make sure `backend/best.pt` exists (your trained weights).
 
-## Training
+## Demo vs real results
 
-### Prepare the Dataset
+- Purple **Demo** badges = sample UI data only.
+- Green **Model** badges = real Flask/YOLOv8 output.
+- If the backend is offline, image/video pages show a clear error — they do **not** invent detections.
 
-Download the datasets from this [github](https://github.com/sekilab/RoadDamageDetector) and you can extract the *RDD2022.zip* files into this structure.
+## Pages
 
-```
-/home/oracl4/project/rdd/dataset/RDD2022/
-├── RDD2022_all_countries
-│   ├── China_Drone
-│   │   └── train
-│   │       ├── annotations
-│   │       │   └── xmls
-│   │       ├── images
-│   │       └── labels # Created after prepare dataset process
-│   ├── China_MotorBike
-│   │   └── ...
-│   ├── Czech
-│   │   └── ...
-│   ├── India
-│   │   └── ...
-│   ├── Japan
-│   │   └── ...
-│   ├── Norway
-│   │   └── ...
-│   └── United_States
-│       └── ...
-└── rawData # Not Used, .zip folder
-```
+1. Dashboard  
+2. Image Detection  
+3. Video Detection  
+4. Detection History  
+5. Analytics & Reports  
+6. About Project  
+7. Settings  
+8. Login / Register  
 
-Perform the dataset conversion from PascalVOC to YOLOv8 format using **0_PrepareDatasetYOLOv8.ipnb** notebook. This will also create a train and val split for the dataset due to lack of test labels on the original dataset. It will also remove excess background image from the dataset. It will copy the dataset and create a new directory on the training folder.
+## Connect your custom model
+
+1. Copy your trained `best.pt` into `backend/`.
+2. Start Flask (`python app.py`).
+3. Confirm `model_loaded: true` at `/api/health`.
+4. Use Image/Video pages in the React app.
+
+Optional: edit `frontend/.env`:
 
 ```
-├── dataset
-│   └── rddJapanIndiaFiltered
-│       ├── India
-│       │   ├── images
-│       │   │   ├── train
-│       │   │   └── val
-│       │   └── labels
-│       │       ├── train
-│       │       └── val
-│       ├── Japan
-│       │   └── ...
-│       └── rdd_JapanIndia.yaml # Create this file for YOLO dataset config
-└── runs
+VITE_API_BASE_URL=http://localhost:5000
 ```
-
-Run the training on **1_TrainingYOLOv8.ipynb** notebook. You can change the hyperparamter and training configuration on that notebook.
-
-## Evaluation Result
-
-This is the training result of the YOLOv8s model that trained on the filtered Japan and India dataset with RTX2060 GPU. You can perform the evaluation on your dataset with **2_EvaluationTesting.ipynb** notebook, just convert your dataset into ultralytics format.
-
-<p align="center">
-    <img src='resource/PR_curve.png' width='80%'>
-    <img src='resource/confusion_matrix.png' width='80%'>
-    <img src='resource/val_batch2_pred.jpg' width='100%'>
-</p>
-
-## License and Citations
-- Road Damage Dataset from Crowdsensing-based Road Damage Detection Challenge (CRDDC2022)
-- All rights reserved on YOLOv8 license permits by [Ultralytics](https://github.com/ultralytics/ultralytics) and [Streamlit](https://streamlit.io/) framework
-
----
-This project is created for the [Road Damage Detection Challenge](https://s.id/RDDHariJalan23) by [Ministry of Public Works and Housing](https://pu.go.id/) for celebrating the "Peringatan Hari Jalan 2023"

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>User Manual — RoadScan AI</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111827; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.45; }
+  h1 { font-size: 16pt; color: #0f2744; margin: 18px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 14pt; color: #0f2744; margin: 14px 0 6px; page-break-after: avoid; }
+  h3 { font-size: 13pt; color: #1e3a5f; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; text-align: justify; }
+  ul, ol { margin: 0 0 10px 22px; }
+  li { margin: 0 0 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; page-break-inside: avoid; }
+  th, td { border: 1px solid #334155; padding: 5px 6px; vertical-align: top; font-size: 10pt; text-align: left; }
+  th { background: #0f2744; color: white; }
+  img { width: 100%; height: auto; }
+  figure { margin: 8px 0 14px; page-break-inside: avoid; }
+  figcaption { text-align: center; font-weight: bold; font-size: 11pt; margin-top: 4px; }
+  .note { color: #1e40af; font-weight: bold; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px; white-space: pre-wrap; }
+  .pagebreak { page-break-before: always; }
+  .cover { page-break-after: always; min-height: 250mm; text-align: center; padding-top: 18mm; }
+  .cover h1 { font-size: 18pt; text-align: center; }
+  .muted { color: #334155; }
+  .kind { color: #1e40af; font-size: 16pt; font-weight: bold; }
+</style>
+</head>
+<body>
+
+    <section class="cover">
+      <p><strong>A PROJECT REPORT</strong></p>
+      <p>ON</p>
+      <h1>Indian Road Damage and Pothole Detection System Using Deep Learning</h1>
+      <p><strong>(RoadScan AI)</strong></p>
+      <p class="kind">User Manual</p>
+      <p>Submitted in partial fulfilment of the requirements for the degree of</p>
+      <p><strong>Master of Computer Applications (MCA) — Final Year</strong></p>
+      <p>2026–2027</p>
+      <p style="margin-top:18px">Submitted by</p>
+      <p><strong>Tushar Ravidas Jarwal</strong><br/>Roll Number: 19</p>
+      <p style="margin-top:14px">Under the guidance of</p>
+      <p><strong>Professor Ajay Patil</strong></p>
+      <p style="margin-top:16px">College / Institute: ________________________________<br/>University: ________________________________</p>
+      <p>November 2026</p>
+    </section>
+    
+<h1>1. Who this manual is for</h1>
+<p>This manual is for a surveyor, a student demonstrator, or a faculty guide using RoadScan AI on a laptop. Installation is covered in the Installation Guide. Start here after both the website and the API are running.</p>
+<h1>2. What you can do</h1>
+<ul><li>Sign in and open the dashboard.</li><li>Analyse a road photograph.</li><li>Analyse a short road video.</li><li>Watch a live camera and see boxes without saving every frame.</li><li>Review history and charts.</li><li>Place saved coordinates on a map and a heatmap.</li><li>Read a risk score.</li><li>Move a defect through a repair trail.</li><li>File a citizen complaint.</li><li>Print an inspection report.</li></ul>
+<h1>3. Sign in</h1>
+<ol><li>Open the site address given in the installation guide, normally http://localhost:5173.</li><li>Choose Login, or Register if you want a display name.</li><li>Enter any email address you will remember, and a password of at least six characters. A demonstration pair is student@roadscan.ai and demo123.</li><li>The dashboard opens. Closing the browser does not log you out. Use Logout when you share the computer.</li></ol>
+<p class='note'>This sign-in stays in this browser. It is a project session, not a municipal staff account. Do not use a personal password you use elsewhere.</p>
+<h1>4. How to read status</h1>
+<p>Before you trust a picture, look at the backend status. Model Online means Flask responded and a weight file is loaded. If the server is stopped, the detection pages show an error. They will not draw sample boxes and pretend they came from the model. Purple Demo marks are sample interface content. Green Model marks are Flask output.</p>
+<h1>5. Analyse a photograph</h1>
+<ol><li>Open Image Detection.</li><li>Choose a JPG or PNG of a road surface. You can start with the sample images supplied with the project.</li><li>Set the confidence slider if you need fewer or more boxes. A higher value keeps only the stronger boxes. The page sends 0.25 unless you change it.</li><li>Optionally type an area name. Use the location control if you want a real GPS point stored. Leave it empty if you do not have one.</li><li>Start the analysis and wait. The first call can be slower while the model is warm.</li><li>Read each box: class name, confidence, and severity colour.</li><li>The run is stored. Open Detection History to see it again.</li></ol>
+<h2>5.1 How to explain severity</h2>
+<p>Severity looks at how much of the picture the box covers. Small boxes are low. Larger boxes are medium or high. Potholes are treated more strictly than cracks. Say clearly that this is a visual estimate for sorting, not a measured depth.</p>
+<h1>6. Analyse a video</h1>
+<ol><li>Open Video Detection.</li><li>Choose a short clip, about 5 to 15 seconds. A long video is sampled and will still stop after 90 analysed frames.</li><li>Add an optional place or GPS point for the clip as a whole. The system stores one location for the file, not a point per frame.</li><li>Start the analysis. CPU inference can take a few minutes.</li><li>Play the annotated video in the page. If it does not play, use the download path from history and check that FFmpeg was installed with the Python packages.</li></ol>
+<h1>7. Live camera</h1>
+<ol><li>Open Live Camera and allow the browser to use the camera.</li><li>Point the camera at a road surface with reasonable light.</li><li>Boxes update from individual frames. These frames are not written into Detection History.</li><li>If you need a permanent record, take a still image on the Image Detection page or file a complaint with a photo.</li></ol>
+<h1>8. History, analytics, and the printed report</h1>
+<p>Detection History lists image and video runs, newest first. You can open one record or delete it. Analytics &amp; Reports charts the stored set. From a record, open the inspection report. Allow pop-up windows if the browser asks. Use the browser print command to save a PDF or to print. The report shows file name, risk score, repair status, GPS when it exists, and a table of boxes.</p>
+<h1>9. Map and heatmap</h1>
+<p>Live Tracker shows only records that have both a latitude and a longitude. A complaint or detection without GPS will not appear, even if it has an area name. Damage Heatmap groups nearby points. A busier or more severe group is drawn as a higher zone. If nobody has stored coordinates yet, the map is empty on purpose.</p>
+<h1>10. Risk score</h1>
+<p>Open Risk Score to read the 0–100 value. Higher means more boxes, higher severity, or higher confidence. Bands are low below 40, medium from 40 to 69, and high from 70 to 100. Use the score to order a work list, then confirm the site in person.</p>
+<h1>11. Road repairs</h1>
+<ol><li>Open Road Repairs.</li><li>Select a detection or a complaint.</li><li>Set the status to Assigned when a crew is named, In Progress when work has started, and Repaired when the site is closed.</li><li>Add a short note. The note is kept in the status history with the time.</li></ol>
+<h1>12. Citizen report</h1>
+<ol><li>Open Citizen Report.</li><li>Enter the area name. This is required.</li><li>Describe the problem in at least eight characters.</li><li>Attach a photo if you have one. When the model is running, the photo is analysed and the boxes are stored on the complaint.</li><li>Submit. The complaint starts as Reported.</li><li>You can filter the complaint list by the email address stored with the report.</li></ol>
+<h1>13. Settings and About</h1>
+<p>Settings holds the local profile. About shows the project abstract, the problem statement, and the team block: Tushar Ravidas Jarwal, Roll No. 19, guided by Professor Ajay Patil.</p>
+<h1>14. Common situations</h1>
+<table><thead><tr><th>What you see</th><th>What to do</th></tr></thead><tbody><tr><td>Backend unavailable</td><td>Start the Flask server. See the Installation Guide.</td></tr><tr><td>API is up and the model is missing</td><td>Place YOLOv8_Small_RDD.pt next to app.py and restart Flask.</td></tr><tr><td>No boxes on a road that clearly has damage</td><td>Lower the confidence and try a closer, sharper photograph. The model can still miss a class it was not trained to see.</td></tr><tr><td>Video is slow</td><td>Use a shorter clip. The server already skips frames.</td></tr><tr><td>Video file will not play</td><td>Confirm imageio-ffmpeg installed. The mp4v fallback is less reliable in Chrome.</td></tr><tr><td>Map is empty</td><td>Run a detection again and supply a real GPS point.</td></tr><tr><td>Popup did not open</td><td>Allow pop-ups for the site, then open the report again.</td></tr><tr><td>Logged out after someone cleared site data</td><td>Sign in again. History on the server is still there.</td></tr></tbody></table>
+<h1>15. Good practice while demonstrating</h1>
+<ul><li>Show /api/health before the first image so the audience sees model_loaded true.</li><li>Say the severity sentence from section 5.1.</li><li>Show one failure: stop the server, attempt an upload, restart, and show recovery.</li><li>Do not describe the login as a secure government login.</li></ul>
+</body>
+</html>

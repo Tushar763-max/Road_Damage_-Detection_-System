@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Software Testing Report — RoadScan AI</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111827; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.45; }
+  h1 { font-size: 16pt; color: #0f2744; margin: 18px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 14pt; color: #0f2744; margin: 14px 0 6px; page-break-after: avoid; }
+  h3 { font-size: 13pt; color: #1e3a5f; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; text-align: justify; }
+  ul, ol { margin: 0 0 10px 22px; }
+  li { margin: 0 0 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; page-break-inside: avoid; }
+  th, td { border: 1px solid #334155; padding: 5px 6px; vertical-align: top; font-size: 10pt; text-align: left; }
+  th { background: #0f2744; color: white; }
+  img { width: 100%; height: auto; }
+  figure { margin: 8px 0 14px; page-break-inside: avoid; }
+  figcaption { text-align: center; font-weight: bold; font-size: 11pt; margin-top: 4px; }
+  .note { color: #1e40af; font-weight: bold; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px; white-space: pre-wrap; }
+  .pagebreak { page-break-before: always; }
+  .cover { page-break-after: always; min-height: 250mm; text-align: center; padding-top: 18mm; }
+  .cover h1 { font-size: 18pt; text-align: center; }
+  .muted { color: #334155; }
+  .kind { color: #1e40af; font-size: 16pt; font-weight: bold; }
+</style>
+</head>
+<body>
+
+    <section class="cover">
+      <p><strong>A PROJECT REPORT</strong></p>
+      <p>ON</p>
+      <h1>Indian Road Damage and Pothole Detection System Using Deep Learning</h1>
+      <p><strong>(RoadScan AI)</strong></p>
+      <p class="kind">Software Testing Report</p>
+      <p>Submitted in partial fulfilment of the requirements for the degree of</p>
+      <p><strong>Master of Computer Applications (MCA) — Final Year</strong></p>
+      <p>2026–2027</p>
+      <p style="margin-top:18px">Submitted by</p>
+      <p><strong>Tushar Ravidas Jarwal</strong><br/>Roll Number: 19</p>
+      <p style="margin-top:14px">Under the guidance of</p>
+      <p><strong>Professor Ajay Patil</strong></p>
+      <p style="margin-top:16px">College / Institute: ________________________________<br/>University: ________________________________</p>
+      <p>November 2026</p>
+    </section>
+    
+<h1>Document control</h1>
+<table><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody><tr><td>Project</td><td>Indian Road Damage and Pothole Detection System Using Deep Learning</td></tr><tr><td>System name</td><td>RoadScan AI</td></tr><tr><td>Student</td><td>Tushar Ravidas Jarwal, Roll No. 19</td></tr><tr><td>Guide</td><td>Professor Ajay Patil</td></tr><tr><td>Version</td><td>1.0 — aligned with backend/app.py and frontend/src</td></tr><tr><td>Test design date</td><td>November 2026</td></tr><tr><td>Execution note</td><td>Cases below are specified from the implementation. Record the actual viva run in the execution log. Do not treat this document as a claim that every case has already passed on a particular machine.</td></tr></tbody></table>
+<h1>1. Introduction</h1>
+<h2>1.1 Purpose</h2>
+<p>This report defines how RoadScan AI is tested. The goal is to show that detection routes obey their contracts, that severity and risk follow the written formulas, that the interface does not invent boxes when Flask is down, and that repair and complaint validation rejects bad input.</p>
+<h2>1.2 Items under test</h2>
+<ul><li>Flask routes in backend/app.py.</li><li>Helper behaviour: severity, worst, compute_risk, read_geo, video stride, even_size.</li><li>React route guard, login validation, and API client error handling.</li><li>SQLite history and complaints tables.</li></ul>
+<h2>1.3 Items not claimed as tested here</h2>
+<ul><li>Accuracy of the weight file against a labelled benchmark. That needs a dataset split and a metrics table.</li><li>Load testing beyond a single user.</li><li>Security penetration testing. The audit report lists design exposures instead.</li></ul>
+<h1>2. Test strategy</h1>
+<table><thead><tr><th>Level</th><th>Method</th><th>Exit idea</th></tr></thead><tbody><tr><td>Unit</td><td>Call the pure rules with fixed boxes, or inspect them line by line if they stay inside app.py.</td><td>Boundaries 1%, 2%, 3%, 8% match Chapter 5 of the project report.</td></tr><tr><td>API</td><td>HTTP calls with curl, the browser, or a short Python script.</td><td>Status codes match the case table.</td></tr><tr><td>Integration</td><td>UI action followed by a history or map check.</td><td>A saved image appears in history and, if GPS was sent, on the tracker.</td></tr><tr><td>System</td><td>Both processes running, one image and one 5–15 second video.</td><td>Annotated media visible, health shows the weight file name.</td></tr><tr><td>Negative</td><td>Missing file, bad image, offline API, bad status.</td><td>4xx or a visible UI error. No fake detections.</td></tr><tr><td>Acceptance</td><td>Guide walks the user manual once.</td><td>Login, detect, history, complaint, repair, print.</td></tr></tbody></table>
+<h2>2.1 Environment</h2>
+<ul><li>Windows 10, Python 3.12, Node.js with npm, Chrome or Edge.</li><li>Frontend: http://localhost:5173. Backend: http://localhost:5000.</li><li>Weights present at backend/YOLOv8_Small_RDD.pt.</li><li>A road photograph and a short MP4 that the student is allowed to use. Three sample images ship in frontend/public/samples.</li></ul>
+<h2>2.2 Severity of a defect</h2>
+<table><thead><tr><th>Level</th><th>Meaning</th></tr></thead><tbody><tr><td>S1</td><td>Wrong boxes presented as model output, data loss, or a crash on a valid image.</td></tr><tr><td>S2</td><td>A documented route returns the wrong status, or GPS is invented.</td></tr><tr><td>S3</td><td>A label, chart mapping, or content-type issue that does not change the boxes.</td></tr><tr><td>S4</td><td>Wording or spacing.</td></tr></tbody></table>
+<h1>3. Rule checks</h1>
+<table><thead><tr><th>ID</th><th>Input</th><th>Expected</th></tr></thead><tbody><tr><td>RU-01</td><td>Box area 1.5% , class Longitudinal Crack</td><td>low</td></tr><tr><td>RU-02</td><td>Box area 2.0% , class Longitudinal Crack</td><td>medium</td></tr><tr><td>RU-03</td><td>Box area 9% , class name contains crack</td><td>medium, because high is downgraded</td></tr><tr><td>RU-04</td><td>Box area 9% , class White Line Blur</td><td>high</td></tr><tr><td>RU-05</td><td>Box area 1.0% , class Pothole</td><td>medium</td></tr><tr><td>RU-06</td><td>Box area 3.0% , class D40</td><td>high</td></tr><tr><td>RU-07</td><td>Box area 0.5% , class Pothole</td><td>low</td></tr><tr><td>RU-08</td><td>No boxes</td><td>risk 0, category low, record severity null</td></tr><tr><td>RU-09</td><td>One high box at confidence 1.0</td><td>38 * 1.4 = 53.2, category medium</td></tr><tr><td>RU-10</td><td>Four or more boxes</td><td>extra +8 before the 0–100 clamp</td></tr><tr><td>RU-11</td><td>Score above 100 by arithmetic</td><td>stored score 100</td></tr><tr><td>RU-12</td><td>Latitude 95 or longitude 200</td><td>coordinates discarded, place name may remain</td></tr><tr><td>RU-13</td><td>Frame count 100</td><td>video stride 2</td></tr><tr><td>RU-14</td><td>Frame count 150</td><td>stride 3</td></tr><tr><td>RU-15</td><td>Frame count 300</td><td>stride 4</td></tr><tr><td>RU-16</td><td>Frame count 700</td><td>stride 5</td></tr><tr><td>RU-17</td><td>Any long video</td><td>frames_processed never above 90</td></tr><tr><td>RU-18</td><td>Width 641 after scale</td><td>even_size reduces the odd dimension by one</td></tr></tbody></table>
+<p>RU-09 is included so the formula can be checked by hand: weight 38 times (0.4 + 1.0) equals 53.2, which rounds to 53. Category medium starts at 40 and high starts at 70.</p>
+<h1>4. API test cases</h1>
+<table><thead><tr><th>ID</th><th>Steps</th><th>Expected</th></tr></thead><tbody><tr><td>API-01</td><td>GET /api/health with weights present</td><td>200, status ok, model_loaded true, model_path ends with the loaded file name, classes is a list</td></tr><tr><td>API-02</td><td>Rename the weight file away and restart</td><td>model_loaded false. POST /api/detect/image returns 503</td></tr><tr><td>API-03</td><td>POST /api/detect/image with no file</td><td>400, error mentions no file</td></tr><tr><td>API-04</td><td>POST a text file named photo.jpg</td><td>400, could not read image</td></tr><tr><td>API-05</td><td>POST a real road image, confidence 0.25</td><td>200, detections is a list, annotated_image starts with data:image/jpeg, id is a UUID, repair_status reported</td></tr><tr><td>API-06</td><td>Repeat API-05 with latitude 19.0760 and longitude 72.8777</td><td>Those coordinates echo in JSON and in GET /api/history/&lt;id&gt;</td></tr><tr><td>API-07</td><td>POST confidence 0.99 on a mild image</td><td>Fewer or zero boxes than confidence 0.15. Both responses are valid</td></tr><tr><td>API-08</td><td>POST /api/detect/video with no file</td><td>400</td></tr><tr><td>API-09</td><td>POST a 10 second road MP4</td><td>200, frames_processed ≤ 90, stride matches the table, annotated_video starts with /outputs/ and ends with .mp4</td></tr><tr><td>API-10</td><td>Open the MP4 URL in Chrome</td><td>Video plays when ffmpeg encoding succeeded</td></tr><tr><td>API-11</td><td>POST /api/detect/frame with a JPEG</td><td>200, saved false, and history count does not increase</td></tr><tr><td>API-12</td><td>GET /api/history</td><td>Array sorted by created_at descending</td></tr><tr><td>API-13</td><td>GET /api/history/not-an-id</td><td>404</td></tr><tr><td>API-14</td><td>DELETE a real history id, then GET it</td><td>First call ok true. Second call 404</td></tr><tr><td>API-15</td><td>POST /api/complaints with description Hi</td><td>400</td></tr><tr><td>API-16</td><td>POST a complaint with a place and a sentence of at least eight characters</td><td>200 body contains id and repair_status reported</td></tr><tr><td>API-17</td><td>PATCH status to scheduled</td><td>400</td></tr><tr><td>API-18</td><td>PATCH status to in_progress with a note</td><td>repair_status in_progress and status_history grows by one object</td></tr><tr><td>API-19</td><td>GET /api/tracker</td><td>Only rows with both coordinates. Complaint rows have type complaint</td></tr><tr><td>API-20</td><td>GET /api/heatmap with no stored GPS</td><td>Empty array. The server must not add a default city</td></tr><tr><td>API-21</td><td>GET /api/dashboard/stats after two image runs</td><td>files equals the history count</td></tr></tbody></table>
+<h1>5. Interface test cases</h1>
+<table><thead><tr><th>ID</th><th>Steps</th><th>Expected</th></tr></thead><tbody><tr><td>UI-01</td><td>Open /dashboard before login</td><td>Redirect to /login</td></tr><tr><td>UI-02</td><td>Login with password abc</td><td>Message requiring six characters</td></tr><tr><td>UI-03</td><td>Login student@roadscan.ai / demo123</td><td>Dashboard opens. Refresh keeps the session</td></tr><tr><td>UI-04</td><td>Register with an empty name</td><td>Validation error</td></tr><tr><td>UI-05</td><td>Stop Flask. Open Image Detection</td><td>Backend unavailable message. No boxes are drawn from sample data</td></tr><tr><td>UI-06</td><td>Start Flask. Header or status shows the model</td><td>model_loaded path is visible to the user as online</td></tr><tr><td>UI-07</td><td>Analyse frontend/public/samples/sample_road_1.jpg</td><td>Result panel shows class, confidence, and severity</td></tr><tr><td>UI-08</td><td>Open History</td><td>The new row is listed</td></tr><tr><td>UI-09</td><td>Open the inspection report popup</td><td>Printable page lists file name, risk, and rows. If the browser blocks popups, the page asks for permission</td></tr><tr><td>UI-10</td><td>Submit a complaint without a photo</td><td>Record exists. Risk follows zero detections unless a photo was analysed</td></tr><tr><td>UI-11</td><td>Move a repair from reported to assigned to in_progress to repaired</td><td>Each step is accepted</td></tr><tr><td>UI-12</td><td>Logout and open /history</td><td>Redirect to login</td></tr><tr><td>UI-13</td><td>Narrow the window</td><td>Sidebar becomes an overlay and can be closed</td></tr><tr><td>UI-14</td><td>Live camera permission denied</td><td>The page reports the camera error and does not create a history row</td></tr></tbody></table>
+<h1>6. Traceability</h1>
+<table><thead><tr><th>Requirement</th><th>Cases</th></tr></thead><tbody><tr><td>FR-01, FR-02</td><td>UI-01, UI-02, UI-03, UI-04, UI-12</td></tr><tr><td>FR-03, FR-16</td><td>API-01, API-02, UI-05, UI-06</td></tr><tr><td>FR-04, FR-13, FR-14</td><td>API-05, API-07, RU-01 to RU-11, UI-07</td></tr><tr><td>FR-05</td><td>API-09, API-10, RU-13 to RU-17</td></tr><tr><td>FR-06</td><td>API-11, UI-14</td></tr><tr><td>FR-07, FR-08</td><td>API-12, API-13, API-14, UI-08</td></tr><tr><td>FR-09</td><td>API-15, API-16, UI-10</td></tr><tr><td>FR-10, FR-11</td><td>API-06, API-19, API-20, RU-12</td></tr><tr><td>FR-12</td><td>API-17, API-18, UI-11</td></tr><tr><td>FR-15</td><td>UI-09</td></tr></tbody></table>
+<h1>7. Defects already visible in source review</h1>
+<p>These are recorded so testing does not rediscover them as surprises. The audit report rates them.</p>
+<table><thead><tr><th>ID</th><th>Observation</th><th>Severity</th></tr></thead><tbody><tr><td>DEF-01</td><td>fetchDashboardStats maps every file into totalImages and sets totalVideos to 0.</td><td>S3</td></tr><tr><td>DEF-02</td><td>GET /outputs/&lt;name&gt; sets mimetype video/mp4 for every file, including JPEG stills.</td><td>S3</td></tr><tr><td>DEF-03</td><td>Repair routes interpolate the table name. The value is limited to two known names, so this is not an open SQL injection, but the pattern should stay constrained.</td><td>S4</td></tr><tr><td>DEF-04</td><td>API routes do not check the browser session.</td><td>S2 as a product risk, accepted for the academic demo</td></tr></tbody></table>
+<h1>8. Execution log</h1>
+<p>Fill this table during the demonstration. Leave a row blank rather than writing Pass in advance.</p>
+<table><thead><tr><th>Case ID</th><th>Date</th><th>Tester</th><th>Result (Pass/Fail)</th><th>Notes</th></tr></thead><tbody><tr><td>API-01</td><td></td><td></td><td></td><td></td></tr><tr><td>API-05</td><td></td><td></td><td></td><td></td></tr><tr><td>API-09</td><td></td><td></td><td></td><td></td></tr><tr><td>API-11</td><td></td><td></td><td></td><td></td></tr><tr><td>API-16</td><td></td><td></td><td></td><td></td></tr><tr><td>API-18</td><td></td><td></td><td></td><td></td></tr><tr><td>UI-03</td><td></td><td></td><td></td><td></td></tr><tr><td>UI-05</td><td></td><td></td><td></td><td></td></tr><tr><td>UI-07</td><td></td><td></td><td></td><td></td></tr><tr><td>UI-11</td><td></td><td></td><td></td><td></td></tr></tbody></table>
+<h1>9. Exit criteria for the viva build</h1>
+<ul><li>Health shows a loaded model.</li><li>One image and one short video produce annotated media.</li><li>A stopped server produces an error on the detection page.</li><li>A complaint and a repair update round-trip.</li><li>Known S3 issues are either fixed or explained from this report.</li></ul>
+</body>
+</html>

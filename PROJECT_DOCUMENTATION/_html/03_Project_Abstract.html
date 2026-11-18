@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Project Abstract — RoadScan AI</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111827; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.45; }
+  h1 { font-size: 16pt; color: #0f2744; margin: 18px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 14pt; color: #0f2744; margin: 14px 0 6px; page-break-after: avoid; }
+  h3 { font-size: 13pt; color: #1e3a5f; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; text-align: justify; }
+  ul, ol { margin: 0 0 10px 22px; }
+  li { margin: 0 0 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; page-break-inside: avoid; }
+  th, td { border: 1px solid #334155; padding: 5px 6px; vertical-align: top; font-size: 10pt; text-align: left; }
+  th { background: #0f2744; color: white; }
+  img { width: 100%; height: auto; }
+  figure { margin: 8px 0 14px; page-break-inside: avoid; }
+  figcaption { text-align: center; font-weight: bold; font-size: 11pt; margin-top: 4px; }
+  .note { color: #1e40af; font-weight: bold; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px; white-space: pre-wrap; }
+  .pagebreak { page-break-before: always; }
+  .cover { page-break-after: always; min-height: 250mm; text-align: center; padding-top: 18mm; }
+  .cover h1 { font-size: 18pt; text-align: center; }
+  .muted { color: #334155; }
+  .kind { color: #1e40af; font-size: 16pt; font-weight: bold; }
+</style>
+</head>
+<body>
+
+    <section class="cover">
+      <p><strong>A PROJECT REPORT</strong></p>
+      <p>ON</p>
+      <h1>Indian Road Damage and Pothole Detection System Using Deep Learning</h1>
+      <p><strong>(RoadScan AI)</strong></p>
+      <p class="kind">Project Abstract</p>
+      <p>Submitted in partial fulfilment of the requirements for the degree of</p>
+      <p><strong>Master of Computer Applications (MCA) — Final Year</strong></p>
+      <p>2026–2027</p>
+      <p style="margin-top:18px">Submitted by</p>
+      <p><strong>Tushar Ravidas Jarwal</strong><br/>Roll Number: 19</p>
+      <p style="margin-top:14px">Under the guidance of</p>
+      <p><strong>Professor Ajay Patil</strong></p>
+      <p style="margin-top:16px">College / Institute: ________________________________<br/>University: ________________________________</p>
+      <p>November 2026</p>
+    </section>
+    
+<h1>Title</h1>
+<p>Indian Road Damage and Pothole Detection System Using Deep Learning</p>
+<p>Working name: RoadScan AI</p>
+<h1>Student and guide</h1>
+<table><thead><tr><th>Field</th><th>Detail</th></tr></thead><tbody><tr><td>Student</td><td>Tushar Ravidas Jarwal</td></tr><tr><td>Roll number</td><td>19</td></tr><tr><td>Guide</td><td>Professor Ajay Patil</td></tr><tr><td>Programme</td><td>Master of Computer Applications (MCA) — Final Year</td></tr><tr><td>Academic year</td><td>2026–2027</td></tr><tr><td>College</td><td>To be written on the cover before submission</td></tr></tbody></table>
+<h1>Abstract</h1>
+<p>Road surface distress on Indian roads is still recorded largely by inspection visits and loose photograph collections. That practice is slow, and it does not attach a class label, a confidence value, or a repair trail to the picture. This project presents RoadScan AI, a web application that detects road damage from images, short videos, and live camera frames using YOLOv8.</p>
+<p>The browser interface is built with React, TypeScript, Vite, and Tailwind CSS. The inference service is a Flask application. It loads YOLOv8_Small_RDD.pt when that file is present, otherwise best.pt, unless MODEL_PATH is set. OpenCV reads media. The model runs at image size 640. Each box is labelled with a friendly class name when the model emits a known road-damage code: longitudinal crack, transverse crack, alligator crack, pothole, white line blur, or crosswalk blur. The original class code is retained.</p>
+<p>Severity is a visual estimate from the percentage of the frame covered by the box, with a stricter rule for potholes and a cap so that a wide crack is not automatically marked as the highest band. A risk score from 0 to 100 combines severity, confidence, and the number of boxes. Image and video analyses are stored in SQLite together with an optional latitude, longitude, and place name. The server never fills in a coordinate the client did not send. Live frames are answered and then discarded so a camera loop does not flood history.</p>
+<p>Around the detector, the dashboard adds history, charts, a map tracker, a heatmap of coordinate buckets, a repair status trail (reported, assigned, in progress, repaired), citizen complaints, and a printable inspection report. If Flask is offline or the weight file is missing, the interface reports the failure. It does not substitute sample boxes.</p>
+<p>The system is an MCA demonstration. Login protects the screens on that browser only. Severity is not an official pavement index, and this abstract does not claim a benchmark mAP because the repository does not store one. Video analysis skips frames and stops after 90 inferences so a CPU laptop can finish a short clip.</p>
+<h1>Keywords</h1>
+<p>Road damage detection, pothole, YOLOv8, Flask, React, SQLite, severity estimate, Indian roads, MCA project.</p>
+<h1>Tools</h1>
+<p>React 19, TypeScript, Vite, Tailwind CSS, Leaflet, Recharts, Python, Flask, OpenCV, Ultralytics YOLOv8, FFmpeg, SQLite.</p>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Final Project Audit Report — RoadScan AI</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #111827; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.45; }
+  h1 { font-size: 16pt; color: #0f2744; margin: 18px 0 8px; page-break-after: avoid; }
+  h2 { font-size: 14pt; color: #0f2744; margin: 14px 0 6px; page-break-after: avoid; }
+  h3 { font-size: 13pt; color: #1e3a5f; margin: 12px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; text-align: justify; }
+  ul, ol { margin: 0 0 10px 22px; }
+  li { margin: 0 0 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; page-break-inside: avoid; }
+  th, td { border: 1px solid #334155; padding: 5px 6px; vertical-align: top; font-size: 10pt; text-align: left; }
+  th { background: #0f2744; color: white; }
+  img { width: 100%; height: auto; }
+  figure { margin: 8px 0 14px; page-break-inside: avoid; }
+  figcaption { text-align: center; font-weight: bold; font-size: 11pt; margin-top: 4px; }
+  .note { color: #1e40af; font-weight: bold; }
+  pre { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px; white-space: pre-wrap; }
+  .pagebreak { page-break-before: always; }
+  .cover { page-break-after: always; min-height: 250mm; text-align: center; padding-top: 18mm; }
+  .cover h1 { font-size: 18pt; text-align: center; }
+  .muted { color: #334155; }
+  .kind { color: #1e40af; font-size: 16pt; font-weight: bold; }
+</style>
+</head>
+<body>
+
+    <section class="cover">
+      <p><strong>A PROJECT REPORT</strong></p>
+      <p>ON</p>
+      <h1>Indian Road Damage and Pothole Detection System Using Deep Learning</h1>
+      <p><strong>(RoadScan AI)</strong></p>
+      <p class="kind">Final Project Audit Report</p>
+      <p>Submitted in partial fulfilment of the requirements for the degree of</p>
+      <p><strong>Master of Computer Applications (MCA) — Final Year</strong></p>
+      <p>2026–2027</p>
+      <p style="margin-top:18px">Submitted by</p>
+      <p><strong>Tushar Ravidas Jarwal</strong><br/>Roll Number: 19</p>
+      <p style="margin-top:14px">Under the guidance of</p>
+      <p><strong>Professor Ajay Patil</strong></p>
+      <p style="margin-top:16px">College / Institute: ________________________________<br/>University: ________________________________</p>
+      <p>November 2026</p>
+    </section>
+    
+<h1>1. Audit statement</h1>
+<p>This audit reviews the RoadScan AI implementation against the objectives of the MCA project “Indian Road Damage and Pothole Detection System Using Deep Learning”. The review is a source and design audit of the repository as implemented for Tushar Ravidas Jarwal (Roll No. 19), guided by Professor Ajay Patil. It is not a certified software-security assessment and it is not a pavement-engineering validation.</p>
+<p>Method: read the Flask application, the React routes, the API client, the about-page scope, the README, and the connection notes; compare them with the requirements in the project report; record gaps without inventing benchmark scores.</p>
+<h1>2. Objective coverage</h1>
+<table><thead><tr><th>Objective</th><th>Evidence</th><th>Result</th></tr></thead><tbody><tr><td>Detect damage with YOLOv8</td><td>app.py loads YOLO and exposes /api/detect/image, /video, and /frame.</td><td>Met, provided a weight file is present.</td></tr><tr><td>Web UI for image and video</td><td>Routes /detect/image and /detect/video.</td><td>Met.</td></tr><tr><td>Live camera</td><td>LiveCamera page and /api/detect/frame. Frames are not stored.</td><td>Met.</td></tr><tr><td>Severity and risk</td><td>severity() and compute_risk() are deterministic and documented.</td><td>Met as a visual estimate. Not an official index.</td></tr><tr><td>History</td><td>SQLite history table and History page.</td><td>Met.</td></tr><tr><td>Analytics</td><td>Analytics page and dashboard stats route.</td><td>Met, with a stat-mapping defect noted below.</td></tr><tr><td>Maps only from real GPS</td><td>read_geo rejects invalid numbers. Heatmap returns stored buckets only.</td><td>Met.</td></tr><tr><td>Citizen complaint</td><td>complaints table and Citizen Report page. Minimum text length enforced.</td><td>Met.</td></tr><tr><td>Repair trail</td><td>Four statuses and status_history.</td><td>Met. Transitions are not strictly ordered.</td></tr><tr><td>Honest failure</td><td>503 without weights. Client error when the host is down. Demo badges separated from model badges.</td><td>Met.</td></tr><tr><td>Publish measured accuracy</td><td>No precision, recall, or mAP artefact is stored in the project.</td><td>Not met. Must not be claimed orally as if it were.</td></tr><tr><td>Secure multi-user accounts</td><td>AuthContext writes localStorage only. API does not verify a user.</td><td>Not met. Acceptable only if described as a demo session.</td></tr></tbody></table>
+<h1>3. Findings</h1>
+<h2>Finding F-01 — Dashboard video count is not computed</h2>
+<p>GET /api/dashboard/stats returns files, damages, and high from the history table. It does not split image and video. The client then assigns files to totalImages and sets totalVideos to 0. A dashboard card for videos can therefore read zero even after successful video jobs. History itself still stores type video.</p>
+<p>Rating: minor functional defect. Recommendation: count by type in SQL and map the fields directly.</p>
+<h2>Finding F-02 — Annotated stills are served as video/mp4</h2>
+<p>The outputs route passes mimetype video/mp4 for every file name. JPEG results may rely on the browser sniffing the bytes. A strict client can fail to display a still.</p>
+<p>Rating: minor. Recommendation: choose image/jpeg or video/mp4 from the extension.</p>
+<h2>Finding F-03 — API is not tied to the login session</h2>
+<p>Anyone who can open port 5000 can post images, read history, delete a history row, and change a repair status. CORS does not add an authentication check. For a classroom laptop this is the intended simplicity. For any shared network it is an exposure.</p>
+<p>Rating: accepted limitation for the academic build. Recommendation: say this in the viva. Do not deploy the server on a public IP in this form.</p>
+<h2>Finding F-04 — No held-out accuracy sheet</h2>
+<p>A detector without a reported evaluation can look stronger in a demo than it is on unseen roads. compare_models.py can print counts on local images. Those counts are not a test set score.</p>
+<p>Rating: documentation gap. Recommendation: add a one-page evaluation when a labelled sample is available, and keep the low-confidence note about best.pt.</p>
+<h2>Finding F-05 — Video recall is bounded on purpose</h2>
+<p>Stride and the 90-frame cap make the demo usable and can skip a short-lived defect. The API returns frames_processed, frames_total, and stride, so the limitation is visible.</p>
+<p>Rating: accepted design trade-off. Recommendation: mention it whenever a video result is shown.</p>
+<h2>Finding F-06 — Upload type is enforced by decoding, not by an allow-list</h2>
+<p>A file that OpenCV cannot read is rejected. A very large video can still consume disk under uploads before the cap stops inference. There is no virus scan and no maximum byte check.</p>
+<p>Rating: acceptable on a personal demo machine. Recommendation: add a size limit before any wider use.</p>
+<h2>Finding F-07 — Repair state machine is open</h2>
+<p>The API allows any permitted status from any other permitted status, including moving backward. The audit diagram shows the intended direction only.</p>
+<p>Rating: minor process gap. Recommendation: reject illegal jumps if the department wants a strict workflow.</p>
+<h2>Finding F-08 — College name is not in the source</h2>
+<p>About.tsx records the student, roll number, and guide. It does not record the college. Covers in this documentation set leave a blank line so the wrong institution is not printed.</p>
+<p>Rating: administrative. Recommendation: fill the college and university lines before binding the report.</p>
+<h1>4. Control checklist</h1>
+<table><thead><tr><th>Control</th><th>Status</th></tr></thead><tbody><tr><td>Weight file is loaded once and the reloader is off</td><td>Present</td></tr><tr><td>Missing model returns 503</td><td>Present</td></tr><tr><td>Invalid GPS is dropped</td><td>Present</td></tr><tr><td>Complaint text length is checked</td><td>Present</td></tr><tr><td>Repair status is checked against a set of four values</td><td>Present</td></tr><tr><td>Live frames do not write history</td><td>Present</td></tr><tr><td>History delete is limited to the history table</td><td>Present</td></tr><tr><td>Passwords are not stored on the server</td><td>True, because there is no server account. Also means there is no server-side control.</td></tr><tr><td>SQL table name is not taken from free text beyond two fixed kinds</td><td>Present, with a caution to keep it that way</td></tr><tr><td>Evaluation metrics file</td><td>Absent</td></tr><tr><td>Automated test suite with stored results</td><td>Absent. smoke_test.py calls a local video path and a running server. It is a manual probe, not a CI suite.</td></tr></tbody></table>
+<h1>5. Standards of description</h1>
+<p>The audit accepts the project language when it says “visual estimate”. The audit would reject any slide or sentence that states a specific mAP, a percentage of Indian roads covered, or a claim that the tool is approved for official inspection, because those statements are not supported by the repository.</p>
+<h1>6. Readiness opinion</h1>
+<p>The build is ready for an MCA final-year demonstration of a deep-learning web system, on the condition that the student: (1) starts from a machine where /api/health shows the intended weight file, (2) explains severity, risk, frame skipping, and the local login in one sentence each, (3) does not quote an accuracy number that was not measured, and (4) writes the college name on the bound cover.</p>
+<p>The build is not ready to be exposed on the public internet or to be used as the sole basis for a repair payment.</p>
+<h1>7. Sign-off</h1>
+<table><thead><tr><th>Role</th><th>Name</th><th>Signature</th><th>Date</th></tr></thead><tbody><tr><td>Student</td><td>Tushar Ravidas Jarwal</td><td></td><td></td></tr><tr><td>Guide</td><td>Professor Ajay Patil</td><td></td><td></td></tr><tr><td>Examiner</td><td></td><td></td><td></td></tr></tbody></table>
+<p>Audit version 1.0. Findings F-01 through F-08 stand until the source changes and this report is revised.</p>
+</body>
+</html>
