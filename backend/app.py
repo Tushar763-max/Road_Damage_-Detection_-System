@@ -8,6 +8,7 @@ Run on Windows 10:
 Server runs at http://localhost:5000
 """
 import base64
+import gc
 import json
 import os
 import sqlite3
@@ -18,7 +19,11 @@ from datetime import datetime
 import cv2
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+import torch
 from ultralytics import YOLO
+
+# Constrain PyTorch to 1 CPU thread to prevent memory spikes on Render free tier (512MB RAM)
+torch.set_num_threads(1)
 
 try:
     import imageio_ffmpeg
@@ -191,9 +196,16 @@ def worst(dets):
 
 
 def run(frame, conf):
-    # imgsz=640 matches typical YOLO training; helps small damage show up
-    r = model.predict(frame, conf=conf, imgsz=640, verbose=False)[0]
+    # Downscale large frames to stay safely within Render free tier (512MB RAM)
     h, w = frame.shape[:2]
+    if max(h, w) > 960:
+        scale = 960.0 / max(h, w)
+        frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+
+    with torch.inference_mode():
+        r = model.predict(frame, conf=conf, imgsz=640, verbose=False, device="cpu")[0]
+
+    cur_h, cur_w = frame.shape[:2]
     dets = []
     for b in r.boxes:
         box = [float(v) for v in b.xyxy[0].tolist()]
@@ -205,10 +217,13 @@ def run(frame, conf):
                 "raw_class": str(raw),
                 "confidence": float(b.conf),
                 "bbox": box,
-                "severity": severity(box, w, h, cls),
+                "severity": severity(box, cur_w, cur_h, cls),
             }
         )
-    return dets, r.plot()
+    plotted = r.plot()
+    del r
+    gc.collect()
+    return dets, plotted
 
 
 def even_size(w, h, max_w=640):
@@ -347,11 +362,13 @@ def detect_image():
     if img is None:
         return jsonify(error="Could not read image"), 400
     dets, annotated = run(img, conf)
-    ok, buf = cv2.imencode(".jpg", annotated)
+    ok, buf = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 82])
     data_url = "data:image/jpeg;base64," + base64.b64encode(buf).decode()
     out_name = rid + ".jpg"
     cv2.imwrite(os.path.join(OUTPUTS, out_name), annotated)
     h, w = img.shape[:2]
+    del img, annotated, buf
+    gc.collect()
     risk, category = save(
         {
             "id": rid,
