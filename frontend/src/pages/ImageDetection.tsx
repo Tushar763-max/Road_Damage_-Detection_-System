@@ -36,6 +36,7 @@ export function ImageDetectionPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [confidence, setConfidence] = useState(0.15);
   const [loading, setLoading] = useState(false);
+  const [loadingHint, setLoadingHint] = useState("");
   const [error, setError] = useState("");
   const [result, setResult] = useState<ImageDetectionResponse | null>(null);
   const [place, setPlace] = useState("");
@@ -81,10 +82,14 @@ export function ImageDetectionPage() {
       return;
     }
     setLoading(true);
+    setLoadingHint("Waking up backend… (Render free tier may take 30-50s on cold start)");
     setError("");
     setResult(null);
     try {
+      // Wake up Render backend (free tier sleeps after 15 min idle)
+      // checkHealth has a 30s timeout — user will see spinner during cold-start
       await checkHealth();
+      setLoadingHint("Running YOLOv8 detection…");
       const lat = parseCoord(latitude);
       const lng = parseCoord(longitude);
       const geo = lat != null && lng != null ? { latitude: lat, longitude: lng, location_name: place || undefined } : place ? { location_name: place } : undefined;
@@ -103,10 +108,13 @@ export function ImageDetectionPage() {
         status: "completed",
       });
     } catch (err) {
+      // Always show the specific error from ApiError (safeFetch), not a generic fallback
       const message =
         err instanceof ApiError
           ? err.message
-          : "Could not analyze image. Is the Flask backend running?";
+          : err instanceof Error
+            ? err.message
+            : "Could not reach the backend. Please check your Render deployment and the VITE_API_BASE_URL environment variable on Vercel.";
       setError(message);
     } finally {
       setLoading(false);
@@ -215,8 +223,12 @@ export function ImageDetectionPage() {
 
             <Button className="w-full" onClick={analyze} disabled={!file || loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
-              {loading ? "Running YOLOv8…" : "Analyze Image"}
+              {loading ? "Analyzing…" : "Analyze Image"}
             </Button>
+
+            {loading && loadingHint ? (
+              <p className="text-center text-xs text-amber-300/90 animate-pulse">{loadingHint}</p>
+            ) : null}
           </CardContent>
         </Card>
 

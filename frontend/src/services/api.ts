@@ -17,6 +17,31 @@ export class ApiError extends Error {
   }
 }
 
+async function safeFetch(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err: unknown) {
+    const isAbort = err instanceof Error && err.name === "AbortError";
+    if (isAbort) {
+      throw new ApiError(
+        `Backend request timed out (${API_BASE}). On Render free tier, the server takes ~30-50s to wake up from sleep. Please wait a few seconds and try again!`,
+        0,
+      );
+    }
+    const isLocal = API_BASE.includes("localhost") || API_BASE.includes("127.0.0.1");
+    if (isLocal) {
+      throw new ApiError(
+        `Cannot connect to local Flask server at ${API_BASE}. Please make sure 'python app.py' is running in your backend terminal.`,
+        0,
+      );
+    }
+    throw new ApiError(
+      `Cannot connect to backend at ${API_BASE}. Please check if the Render web service is 'Live' and awake.`,
+      0,
+    );
+  }
+}
+
 async function parseJson<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -36,15 +61,11 @@ export async function checkHealth(): Promise<{
   classes?: string[];
 }> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 4000);
+  // 30s timeout to allow Render free tier cold-start to wake up
+  const timer = setTimeout(() => controller.abort(), 30000);
   try {
-    const res = await fetch(`${API_BASE}/api/health`, { signal: controller.signal });
+    const res = await safeFetch(`${API_BASE}/api/health`, { signal: controller.signal });
     return parseJson(res);
-  } catch {
-    throw new ApiError(
-      "Backend unavailable. Start the Flask server at http://localhost:5000.",
-      0,
-    );
   } finally {
     clearTimeout(timer);
   }
@@ -70,7 +91,7 @@ export async function detectImage(
   form.append("file", file);
   form.append("confidence", String(confidence));
   appendGeo(form, geo);
-  const res = await fetch(`${API_BASE}/api/detect/image`, {
+  const res = await safeFetch(`${API_BASE}/api/detect/image`, {
     method: "POST",
     body: form,
   });
@@ -86,7 +107,7 @@ export async function detectVideo(
   form.append("file", file);
   form.append("confidence", String(confidence));
   appendGeo(form, geo);
-  const res = await fetch(`${API_BASE}/api/detect/video`, {
+  const res = await safeFetch(`${API_BASE}/api/detect/video`, {
     method: "POST",
     body: form,
   });
@@ -97,7 +118,7 @@ export async function detectFrame(blob: Blob, confidence = 0.15) {
   const form = new FormData();
   form.append("file", blob, "frame.jpg");
   form.append("confidence", String(confidence));
-  const res = await fetch(`${API_BASE}/api/detect/frame`, { method: "POST", body: form });
+  const res = await safeFetch(`${API_BASE}/api/detect/frame`, { method: "POST", body: form });
   return parseJson<{
     detections: HistoryRecord["detections"];
     annotated_image: string | null;

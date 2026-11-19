@@ -96,7 +96,9 @@ export function VideoDetectionPage() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Could not analyze video. Is the Flask backend running?",
+          : err instanceof Error
+            ? err.message
+            : "Could not analyze video. Is the Flask backend running?",
       );
       setProgressHint("");
     } finally {
