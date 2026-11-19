@@ -196,14 +196,14 @@ def worst(dets):
 
 
 def run(frame, conf):
-    # Downscale large frames to stay safely within Render free tier (512MB RAM)
+    # Downscale frames so memory stays strictly under Render free tier (512MB RAM)
     h, w = frame.shape[:2]
-    if max(h, w) > 960:
-        scale = 960.0 / max(h, w)
+    if max(h, w) > 640:
+        scale = 640.0 / max(h, w)
         frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
 
     with torch.inference_mode():
-        r = model.predict(frame, conf=conf, imgsz=640, verbose=False, device="cpu")[0]
+        r = model.predict(frame, conf=conf, imgsz=384, verbose=False, device="cpu")[0]
 
     cur_h, cur_w = frame.shape[:2]
     dets = []
