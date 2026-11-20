@@ -360,6 +360,7 @@ def save(rec):
 def health():
     return jsonify(
         status="ok",
+        version="v2.1-cpu-fix",
         model_loaded=model is not None,
         model_path=os.path.basename(WEIGHTS) if model is not None else None,
         classes=list(model.names.values()) if model is not None else [],
