@@ -91,11 +91,26 @@ export async function detectImage(
   form.append("file", file);
   form.append("confidence", String(confidence));
   appendGeo(form, geo);
-  const res = await safeFetch(`${API_BASE}/api/detect/image`, {
-    method: "POST",
-    body: form,
-  });
-  return parseJson(res);
+  // 120s timeout – Render free tier cold-starts take 30-50s, then inference needs time
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 120000);
+  try {
+    const res = await safeFetch(`${API_BASE}/api/detect/image`, {
+      method: "POST",
+      body: form,
+      signal: controller.signal,
+    });
+    // Render sometimes returns 502 when the worker runs out of memory
+    if (res.status === 502) {
+      throw new ApiError(
+        "Backend returned 502 (Bad Gateway). The Render server may have run out of memory or restarted. Please wait 30-60 seconds and try again.",
+        502,
+      );
+    }
+    return parseJson(res);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function detectVideo(

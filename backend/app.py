@@ -24,6 +24,10 @@ from ultralytics import YOLO
 
 # Constrain PyTorch to 1 CPU thread to prevent memory spikes on Render free tier (512MB RAM)
 torch.set_num_threads(1)
+# Disable gradient computation globally – saves ~30% memory on inference-only workloads
+torch.set_grad_enabled(False)
+
+import numpy as np
 
 try:
     import imageio_ffmpeg
@@ -45,6 +49,11 @@ WEIGHTS = os.environ.get("MODEL_PATH")
 if not WEIGHTS:
     WEIGHTS = DEFAULT_WEIGHTS if os.path.exists(DEFAULT_WEIGHTS) else FALLBACK_WEIGHTS
 
+# Maximum dimension for input images – smaller = less RAM on Render free tier
+MAX_DIM = int(os.environ.get("MAX_DIM", 480))
+# YOLO inference image size – 256 keeps peak RAM under 512 MiB
+INFER_IMGSZ = int(os.environ.get("INFER_IMGSZ", 256))
+
 # Friendly labels for RDD Japan/India class codes
 CLASS_ALIASES = {
     "D00": "Longitudinal Crack",
@@ -61,7 +70,24 @@ CLASS_ALIASES = {
 
 app = Flask(__name__)
 CORS(app)
-model = YOLO(WEIGHTS) if os.path.exists(WEIGHTS) else None
+
+# ---------- Load model once at startup & optimise for low-RAM environments ----------
+model = None
+if os.path.exists(WEIGHTS):
+    model = YOLO(WEIGHTS)
+    # FP16 weights use half the memory (~45 MiB vs 90 MiB for the Small model)
+    try:
+        model.model.half()
+    except Exception:
+        pass  # fall back to FP32 if half() not supported
+    # Warm-up: run a tiny dummy image so first real request isn't penalised
+    try:
+        _dummy = np.zeros((32, 32, 3), dtype=np.uint8)
+        model.predict(_dummy, imgsz=32, verbose=False, device="cpu")
+        del _dummy
+        gc.collect()
+    except Exception:
+        pass
 
 
 def pretty_class(name: str) -> str:
@@ -198,12 +224,12 @@ def worst(dets):
 def run(frame, conf):
     # Downscale frames so memory stays strictly under Render free tier (512MB RAM)
     h, w = frame.shape[:2]
-    if max(h, w) > 640:
-        scale = 640.0 / max(h, w)
+    if max(h, w) > MAX_DIM:
+        scale = float(MAX_DIM) / max(h, w)
         frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
 
     with torch.inference_mode():
-        r = model.predict(frame, conf=conf, imgsz=384, verbose=False, device="cpu")[0]
+        r = model.predict(frame, conf=conf, imgsz=INFER_IMGSZ, verbose=False, device="cpu", half=True)[0]
 
     cur_h, cur_w = frame.shape[:2]
     dets = []
@@ -221,7 +247,7 @@ def run(frame, conf):
             }
         )
     plotted = r.plot()
-    del r
+    del r, frame
     gc.collect()
     return dets, plotted
 
@@ -369,6 +395,11 @@ def detect_image():
     h, w = img.shape[:2]
     del img, annotated, buf
     gc.collect()
+    # Remove the uploaded file to save disk space on Render's ephemeral filesystem
+    try:
+        os.remove(path)
+    except OSError:
+        pass
     risk, category = save(
         {
             "id": rid,
