@@ -75,19 +75,14 @@ CORS(app)
 model = None
 if os.path.exists(WEIGHTS):
     model = YOLO(WEIGHTS)
-    # FP16 weights use half the memory (~45 MiB vs 90 MiB for the Small model)
-    try:
-        model.model.half()
-    except Exception:
-        pass  # fall back to FP32 if half() not supported
     # Warm-up: run a tiny dummy image so first real request isn't penalised
     try:
         _dummy = np.zeros((32, 32, 3), dtype=np.uint8)
         model.predict(_dummy, imgsz=32, verbose=False, device="cpu")
         del _dummy
         gc.collect()
-    except Exception:
-        pass
+    except Exception as e:
+        print("Warmup note:", e)
 
 
 def pretty_class(name: str) -> str:
@@ -229,7 +224,7 @@ def run(frame, conf):
         frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
 
     with torch.inference_mode():
-        r = model.predict(frame, conf=conf, imgsz=INFER_IMGSZ, verbose=False, device="cpu", half=True)[0]
+        r = model.predict(frame, conf=conf, imgsz=INFER_IMGSZ, verbose=False, device="cpu")[0]
 
     cur_h, cur_w = frame.shape[:2]
     dets = []
@@ -378,62 +373,67 @@ def detect_image():
     f = request.files.get("file")
     if not f:
         return jsonify(error="No file uploaded"), 400
-    conf = float(request.form.get("confidence", 0.15))
-    lat, lng, place = read_geo()
-    rid = str(uuid.uuid4())
-    ext = os.path.splitext(f.filename or "")[1] or ".jpg"
-    path = os.path.join(UPLOADS, rid + ext)
-    f.save(path)
-    img = cv2.imread(path)
-    if img is None:
-        return jsonify(error="Could not read image"), 400
-    dets, annotated = run(img, conf)
-    ok, buf = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 82])
-    data_url = "data:image/jpeg;base64," + base64.b64encode(buf).decode()
-    out_name = rid + ".jpg"
-    cv2.imwrite(os.path.join(OUTPUTS, out_name), annotated)
-    h, w = img.shape[:2]
-    del img, annotated, buf
-    gc.collect()
-    # Remove the uploaded file to save disk space on Render's ephemeral filesystem
     try:
-        os.remove(path)
-    except OSError:
-        pass
-    risk, category = save(
-        {
-            "id": rid,
-            "type": "image",
-            "filename": f.filename,
-            "total": len(dets),
-            "severity": worst(dets),
-            "detections": dets,
-            "result_url": f"/outputs/{out_name}",
-            "latitude": lat,
-            "longitude": lng,
-            "location_name": place,
-            "description": request.form.get("description"),
-            "owner_email": request.form.get("owner_email"),
-        }
-    )
-    return jsonify(
-        {
-            "id": rid,
-            "filename": f.filename,
-            "width": w,
-            "height": h,
-            "detections": dets,
-            "annotated_image": data_url,
-            "severity": worst(dets),
-            "model": os.path.basename(WEIGHTS),
-            "latitude": lat,
-            "longitude": lng,
-            "location_name": place,
-            "repair_status": "reported",
-            "risk_score": risk,
-            "risk_category": category,
-        }
-    )
+        conf = float(request.form.get("confidence", 0.15))
+        lat, lng, place = read_geo()
+        rid = str(uuid.uuid4())
+        ext = os.path.splitext(f.filename or "")[1] or ".jpg"
+        path = os.path.join(UPLOADS, rid + ext)
+        f.save(path)
+        img = cv2.imread(path)
+        if img is None:
+            return jsonify(error="Could not read image"), 400
+        dets, annotated = run(img, conf)
+        ok, buf = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 82])
+        data_url = "data:image/jpeg;base64," + base64.b64encode(buf).decode()
+        out_name = rid + ".jpg"
+        cv2.imwrite(os.path.join(OUTPUTS, out_name), annotated)
+        h, w = img.shape[:2]
+        del img, annotated, buf
+        gc.collect()
+        # Remove the uploaded file to save disk space on Render's ephemeral filesystem
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        risk, category = save(
+            {
+                "id": rid,
+                "type": "image",
+                "filename": f.filename,
+                "total": len(dets),
+                "severity": worst(dets),
+                "detections": dets,
+                "result_url": f"/outputs/{out_name}",
+                "latitude": lat,
+                "longitude": lng,
+                "location_name": place,
+                "description": request.form.get("description"),
+                "owner_email": request.form.get("owner_email"),
+            }
+        )
+        return jsonify(
+            {
+                "id": rid,
+                "filename": f.filename,
+                "width": w,
+                "height": h,
+                "detections": dets,
+                "annotated_image": data_url,
+                "severity": worst(dets),
+                "model": os.path.basename(WEIGHTS),
+                "latitude": lat,
+                "longitude": lng,
+                "location_name": place,
+                "repair_status": "reported",
+                "risk_score": risk,
+                "risk_category": category,
+            }
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify(error=f"Inference error: {str(e)}"), 500
 
 
 @app.post("/api/detect/video")
