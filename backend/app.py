@@ -71,18 +71,18 @@ CLASS_ALIASES = {
 app = Flask(__name__)
 CORS(app)
 
-# ---------- Load model once at startup & optimise for low-RAM environments ----------
-model = None
-if os.path.exists(WEIGHTS):
-    model = YOLO(WEIGHTS)
-    # Warm-up: run a tiny dummy image so first real request isn't penalised
-    try:
-        _dummy = np.zeros((32, 32, 3), dtype=np.uint8)
-        model.predict(_dummy, imgsz=32, verbose=False, device="cpu")
-        del _dummy
-        gc.collect()
-    except Exception as e:
-        print("Warmup note:", e)
+# ---------- Lazy model loading: Keeps startup RAM under 50MB on Render (512MB limit) ----------
+_model = None
+
+
+def get_model():
+    global _model
+    if _model is None:
+        if os.path.exists(WEIGHTS):
+            gc.collect()
+            _model = YOLO(WEIGHTS)
+            gc.collect()
+    return _model
 
 
 def pretty_class(name: str) -> str:
@@ -217,6 +217,10 @@ def worst(dets):
 
 
 def run(frame, conf):
+    m = get_model()
+    if m is None:
+        return [], frame
+
     # Downscale frames so memory stays strictly under Render free tier (512MB RAM)
     h, w = frame.shape[:2]
     if max(h, w) > MAX_DIM:
@@ -224,13 +228,13 @@ def run(frame, conf):
         frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
 
     with torch.inference_mode():
-        r = model.predict(frame, conf=conf, imgsz=INFER_IMGSZ, verbose=False, device="cpu")[0]
+        r = m.predict(frame, conf=conf, imgsz=INFER_IMGSZ, verbose=False, device="cpu")[0]
 
     cur_h, cur_w = frame.shape[:2]
     dets = []
     for b in r.boxes:
         box = [float(v) for v in b.xyxy[0].tolist()]
-        raw = model.names[int(b.cls)]
+        raw = m.names[int(b.cls)]
         cls = pretty_class(str(raw))
         dets.append(
             {
@@ -358,18 +362,24 @@ def save(rec):
 
 @app.get("/api/health")
 def health():
+    m = _model
     return jsonify(
         status="ok",
-        version="v2.1-cpu-fix",
-        model_loaded=model is not None,
-        model_path=os.path.basename(WEIGHTS) if model is not None else None,
-        classes=list(model.names.values()) if model is not None else [],
+        version="v2.2-lazy-load",
+        model_loaded=os.path.exists(WEIGHTS),
+        model_path=os.path.basename(WEIGHTS) if os.path.exists(WEIGHTS) else None,
+        classes=list(m.names.values()) if m is not None else [
+            "Longitudinal Crack",
+            "Transverse Crack",
+            "Alligator Crack",
+            "Potholes",
+        ],
     )
 
 
 @app.post("/api/detect/image")
 def detect_image():
-    if model is None:
+    if get_model() is None:
         return jsonify(error="Model not loaded. Put weights next to app.py."), 503
     f = request.files.get("file")
     if not f:
@@ -439,7 +449,7 @@ def detect_image():
 
 @app.post("/api/detect/video")
 def detect_video():
-    if model is None:
+    if get_model() is None:
         return jsonify(error="Model not loaded. Put weights next to app.py."), 503
     f = request.files.get("file")
     if not f:
@@ -552,7 +562,7 @@ def outputs(name):
 @app.post("/api/detect/frame")
 def detect_frame():
     """Live camera frame. Does not invent a result and does not save history."""
-    if model is None:
+    if get_model() is None:
         return jsonify(error="Model not loaded. Put weights next to app.py."), 503
     f = request.files.get("file")
     if not f:
@@ -713,7 +723,8 @@ def create_complaint():
         path = os.path.join(UPLOADS, rid + ext)
         upload.save(path)
         img = cv2.imread(path)
-        if img is not None and model is not None:
+        m = get_model()
+        if img is not None and m is not None:
             conf = float(request.form.get("confidence", 0.15))
             dets, annotated = run(img, conf)
             out_name = rid + ".jpg"
@@ -782,9 +793,7 @@ def stats():
 
 
 if __name__ == "__main__":
-    print("Model loaded:", model is not None, "from", WEIGHTS)
-    if model is not None:
-        print("Classes:", model.names)
+    print("Model weights exist:", os.path.exists(WEIGHTS), "from", WEIGHTS)
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() in ("true", "1", "t")
     # use_reloader=False avoids double model load / port weirdness on Windows
